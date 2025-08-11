@@ -53,7 +53,19 @@ This is the easiest way to get a fully configured development environment.
     nix develop
     ```
 
-3.  **Run the app**:
+4.  **Install dependencies**:
+    Use the provided `Makefile` for convenience.
+    ```bash
+    make install
+    ```
+
+5. **Re-Install dependencies**:
+   delete existing node_modules directory and the package-lock.json and run 
+   ```bash
+    make install
+    ```
+    
+6.  **Run the app**:
     Use the provided `Makefile` for convenience.
     ```bash
     # Start the development server
