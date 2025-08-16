@@ -1,86 +1,9 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { createQuiz, getQuizzes, calculateQuizMastery } from '../services/quizService';
+import { srsServiceTests } from './unit/srsService.test';
+import { quizFlowTests } from './integration/quizFlow.test';
 
-// Inlined CSV data to remove dependency on vite/client types for `?raw` import.
-const sampleCsvData = `Page,die Seite
-Hair(single strand),das Haar
-Head,der Kopf
-Face,das Gesicht
-Meat,das Fleisch
-Street,die Straße
-Water,das Wasser
-Beef,das Rindfleisch
-Pork,das Schweinefleisch
-Pig,das Schwein
-Lamb(Zool),das Lamm
-Hospital,das Krankenhaus
-Doctor(male),der Arzt
-Engineer(male),der Ingenieur
-Teacher(male),der Lehrer
-Table,der Tisch
-Calendar,der Kalender
-Cow,die Kuh
-Crow,die Krähe
-Crowd,die Menge
-Umbrella,der Regenschirm
-Bottle,die Flasche`;
-
-// A simple assertion helper
-function expect<T>(actual: T) {
-  return {
-    toBe(expected: T) {
-      if (actual !== expected) {
-        throw new Error(`Expected ${JSON.stringify(actual)} to be ${JSON.stringify(expected)}`);
-      }
-    },
-    toBeDefined() {
-        if(actual === undefined || actual === null) {
-            throw new Error(`Expected value to be defined, but got ${actual}`);
-        }
-    },
-    toHaveLength(expected: number) {
-        const length = (actual as any)?.length;
-        if (length !== expected) {
-            throw new Error(`Expected length to be ${expected}, but got ${length}`);
-        }
-    }
-  };
-}
-
-// Test case definitions
-const testCases = [
-    {
-        name: 'Test Case 1: Create a new quiz and verify its properties',
-        testFn: async () => {
-            const quizName = "IntTest22";
-            const expectedCardCount = 22;
-
-            // Action: create the quiz
-            createQuiz(quizName, sampleCsvData);
-
-            // Verification
-            const quizzes = getQuizzes();
-            const createdQuiz = quizzes.find(q => q.name === quizName);
-
-            // Assert quiz was created
-            expect(createdQuiz).toBeDefined();
-            
-            // This check is for TypeScript to know createdQuiz is not undefined from this point
-            if (!createdQuiz) throw new Error("Quiz should have been defined");
-
-            // Assert correct name
-            expect(createdQuiz.name).toBe(quizName);
-
-            // Assert correct number of cards
-            expect(createdQuiz.cards).toHaveLength(expectedCardCount);
-
-            // Assert initial mastery is 0
-            const mastery = calculateQuizMastery(createdQuiz);
-            expect(mastery).toBe(0);
-        }
-    }
-];
+const allTestCases = [...quizFlowTests, ...srsServiceTests];
 
 type TestResult = 'idle' | 'running' | 'passed' | 'failed';
 
@@ -94,7 +17,7 @@ interface TestState {
 // Test Runner Component
 const TestRunner: React.FC = () => {
     const [results, setResults] = useState<TestState[]>(
-        testCases.map(tc => ({ name: tc.name, status: 'idle', error: null }))
+        allTestCases.map(tc => ({ name: tc.name, status: 'idle', error: null }))
     );
     const [isTesting, setIsTesting] = useState(false);
 
@@ -102,11 +25,11 @@ const TestRunner: React.FC = () => {
         setIsTesting(true);
 
         // Create a mutable copy of the initial state, with an explicit type to prevent inference errors.
-        const currentResults: TestState[] = testCases.map(tc => ({ name: tc.name, status: 'idle', error: null }));
+        const currentResults: TestState[] = allTestCases.map(tc => ({ name: tc.name, status: 'idle', error: null }));
         setResults(currentResults);
 
 
-        for (let i = 0; i < testCases.length; i++) {
+        for (let i = 0; i < allTestCases.length; i++) {
             // Setup: clear localStorage before each test for isolation
             localStorage.clear();
             
@@ -114,7 +37,7 @@ const TestRunner: React.FC = () => {
             setResults([...currentResults]);
 
             try {
-                await testCases[i].testFn();
+                await allTestCases[i].testFn();
                 currentResults[i] = { ...currentResults[i], status: 'passed', error: null };
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
