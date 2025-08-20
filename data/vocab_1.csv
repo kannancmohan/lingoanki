@@ -1,0 +1,501 @@
+Page,die Seite
+Hair(single strand),das Haar
+Head,der Kopf
+Face,das Gesicht
+Meat,das Fleisch
+Street,die Straße
+Water,das Wasser
+Beef,das Rindfleisch
+Pork,das Schweinefleisch
+Pig,das Schwein
+Lamb(Zool),das Lamm
+Hospital,das Krankenhaus
+Doctor(male),der Arzt
+Engineer(male),der Ingenieur
+Teacher(male),der Lehrer
+Table,der Tisch
+Calendar,der Kalender
+Cow,die Kuh
+Crow,die Krähe
+Crowd,die Menge
+Umbrella,der Regenschirm
+Bottle,die Flasche
+Pen,der Kuli
+Pencil,der Bleistift
+Eraser,der Radiergummi
+Brush,die Bürste
+Flag,die Fahne
+Fish,der Fisch
+Leg,das Bein
+Arm,der Arm
+Hand,die Hand
+Friend,der Freund
+Body,der Körper
+Traffic light,die Ampel
+Landlord,der Vermieter
+Tenant[Male],der Mieter
+Kitchen,die Küche
+Man,der Mann
+Tongue,die Zunge
+Clothes/clothing(formal and spoken),die Kleidung und die Klamotten
+Car,das Auto
+Bread,das Brot
+Pharmacy,die Apotheke
+Railway station,der Bahnhof
+Women,die Frau
+Shirt,das Hemd
+Pants,die Hose
+Shoe and Shoes,der Schuh und die Schuhe
+Train,der Zug
+Newspaper ,die Zeitung
+Birthplace ,der Geburtsort
+Cake,der Kuchen
+Vegetable,das Gemüse
+Finger,der Finger
+Stomach(organ),der Magen
+Back(part of the body),der Rücken
+Chest,die Brust
+Number,die Nummer
+Bird,der Vogel
+Insect,das Insekt
+Nose,die Nase
+Bus,der Bus
+Bus stop,die Bushaltestelle
+Animal,das Tier
+Art,die Kunst
+Dog,der Hund
+Cat,die Katze
+Tea,der Tee
+Nurse(female),die Krankenschwester
+Male Nurse,der Krankenpfleger
+Employee(both Male&Female),der Angestellte und die Angestellte
+Police man,der Polizist
+Cook(Male) and Female,der Koch und die Köchin
+Manager(Male),der Leiter
+Bakery,die Bäckerei
+Breakfast,das Frühstück
+Sunglass,die Sonnenbrille
+Boat,das Boot
+Office,das Büro
+Milk,die Milch
+Beach,der Strand
+Hill,der Hügel
+Colour,die Farbe
+Prisoner,der Häftling
+Escape,die Flucht
+Refugee,der Flüchtling
+Apprentice,der Lehrling
+Twin und Twins,der Zwilling und die Zwillinge
+Time,die Zeit
+Time Zone,die Zeitzone
+Support,die Unterstützung
+End/Ending,die Endung
+Fruit,das Obst
+First Name,der Vorname
+Last Name,der Nachname
+Mouth,der Mund
+Wife,die Ehefrau
+Fire,das Feuer
+plate/sign (display),das Schild
+Street/road sign,das Straßenschild
+Information,die Information
+Song,das Lied
+World,die Welt
+School,die Schule
+Letter,der Brief
+Box,der Kasten
+Letter Box,der Briefkasten
+Chocolate,die Schokolade
+Mirror,der Spiegel
+Leader,der Leiter
+Tax,die Steuer
+Cupboard,der Schrank
+Fridge,der Kühlschrank
+Wardrobe,der Kleiderschrank
+Highway,die Autobahn
+Roundabout,der Kreisel
+Business,das Geschäft
+Flower and Flowers,die Blume und die Blumen
+Cabbage,der Kohl
+Cauliflower,der Blumenkohl
+postal stamp,die Briefmarke
+Invoice,die Rechnung
+Farmer(male),der Bauer
+Farm,der Bauernhof
+Civil Servant(male),der Beamte
+Profession,der Beruf
+Bear(animal),der Bär
+Owl,die Eule
+Shoulder,die Schulter
+Spoon,der Löffel
+Knife,das Messer
+Fork(utensils),die Gabel
+Plate(dining),der Teller
+Peacock,der Pfau
+Parrot,der Papagei
+Pigeon,die Taube
+Machine,die Maschine
+Washing Machine,die Waschmaschine
+iron,das Eisen
+Iron box/electric iron,das Bügeleisen
+Suitcase,der Koffer
+Rice,der Reis
+Bed,das Bett
+Sentence(grammer),der Satz
+Noun(grammer),das Nomen
+Bicycle,das Fahrrad
+Driver(Male),der Fahrer
+Company,die Firma
+Flea Market,der Flohmarkt
+Sea,das Meer
+Salt,das Salz
+Dinner,das Abendessen
+Clip,die Klammer
+Paper clip,die Büroklammer
+Hair clip,die Haarklammer
+Soap,die Seife
+Book &  Books,das Buch und die Bücher
+Caution/Be Careful,die Vorsicht
+Key,der Schlüssel
+Furniture,die Möbel
+Hard disk,die Festplatte
+Apartment/flat,die Wohnung
+Question mark,das Fragezeichen
+Gardener(Male),der Gärtner
+Salary,das Gehalt
+Love,die Liebe
+Opportunity,die Gelegenheit
+Mobile phone,das Handy
+Money,das Geld
+Corn,der Mais
+Human,der Mensch
+People/ Flok,die Leute
+City,die Stadt
+Life,das Leben
+Dictionary,das Wörterbuch
+Career,die Karriere
+Eye,das Auge
+Rat,die Ratte
+Nut(Botanical),die Nuss
+Apple,der Apfel
+Clown,der Clown
+Printer,der Drucker
+Elephant,der Elefant
+Frog,der Frosch
+Guitar,die Gitarre
+House,das Haus
+Island,die Insel
+Jacket,die Jacke
+Comb,der Kamm
+Land,das Land
+Mouse,die Maus
+Penguin,der Pinguin
+Jellyfish,die Qualle
+Sun,die Sonne
+Tiger,der Tiger
+Clock,die Uhr
+Volcano,der Vulkan
+Wine,der Wein
+Zebra,das Zebra
+Foot,der Fuß
+Police,die Polizei
+Word and Words,das Wort und die Wörter
+Sky,der Himmel
+Sibling,das Geschwister
+Story|history,die Geschichte
+Cup,die Tasse
+Neighbour,der Nachbar
+Practice/Exercise,die Übung
+Task/Assignment,die Aufgabe
+Homework,die Hausaufgaben
+Luck,das Glück
+Arrival,die Ankunft
+Case(Law/Med),der Fall
+Voice,die Stimme
+Branch,der Ast
+Gate,das Tor
+God,der Gott
+Monkey,der Affe
+Cashier(male),der Kassierer
+Example,das Beispiel
+Fun,der Spaß
+Pronunciation,die Aussprache
+Visitor(male),der Besucher
+Massage,die Massage
+Fine(penalty),das Bußgeld
+Country,das Land
+Airport,der Flughafen
+Forest,der Wald
+Nature,die Natur 
+Mountain,der Berg
+Village,das Dorf
+Tree,der Baum
+Sweet/Cute,süß
+Happy and unhappy,glücklich und unglücklich
+Of course,natürlich
+very/ very much,sehr
+also/too,auch
+only(when something is still early/just starting/hasn't progressed much yet),erst
+always,immer
+together,zusammen
+only,nur
+perhaps/may be,vielleicht
+sometimes,manchmal
+still/even/more,noch
+already/yet,schon
+enough/sufficient,genug
+alone,allein
+again,wieder
+less(Used when comparing two quantities),weniger
+like/love to| gladly,gern
+then,dann
+here,hier
+Left,links
+Right(direction),rechts
+Up,hinauf
+Down,hinunter
+Straight,gerade
+Straight on/Straight ahead,geradeaus
+Around,herum
+Forward,vorwärts
+Backward,rückwärts
+East,ost
+West,west
+North,nord
+South,süd
+Hard/Firm,fest
+Almost/Nearly,fast
+single/unmarried,ledig
+unfortunately/sadly,leider
+more,mehr
+Nice/kind,nett
+Never,nie
+past/previously/earlier,früher
+easy (focuses on simplicity),einfach
+delicious/tasty,lecker
+wonderful/incredible,wunderbar
+Congratulation,der Glückwunsch
+Wish/Desire (A wish/goal/request - something you want to happen),der Wunsch
+Thing/Object,das Ding
+Library,die Bibliothek
+Party/Celebration,die Feier
+Birthday party,die Geburtstagsfeier
+Identity card,der Ausweis
+Rent,die Miete
+Gas/petrol/gasoline,das Benzin
+Price,der Preis
+Hunter[male],der Jäger
+year and years,das Jahr und die Jahre
+Solution/Resolution,die Lösung
+Sickness/Disease/Illness,die Krankheit
+River,der Fluss
+Skirt[dress],der Rock
+pet/domestic animal,das Haustier
+help/aid,die Hilfe
+Tip/tip money,das Trinkgeld
+Gift,das Geschenk
+climate,das Klima
+AC-Air conditioner,die Klimaanlage
+Discussion,die Diskussion
+Computer science,die Informatik
+postcard,die Postkarte
+lake,der See
+alarm clock,der Wecker
+certificate,die Bescheinigung
+lamp(electric lamp),die Lampe
+telephone,das Telefon
+class/tuition/instruction,der Unterricht
+Afternoon,der Nachmittag
+Light,das Licht
+Internet,das Internet
+E-Mail,die E-Mail
+Announcement,die Durchsage
+Change/transition,der Wechsel
+Advertisement,die Anzeige
+Restaurant,das Restaurant
+Bathroom,das Badezimmer
+News,die Nachricht
+Game,das Spiel
+Cushion|Pillow,das Kissen
+decision,die Entscheidung
+market,der Markt
+ginger,der Ingwer
+Test|Exam,die Prüfung
+Number (of)| Count | Quantity,die Anzahl
+Number (math),die Zahl
+Passenger and passengers,der Fahrgast und die Fahrgäste
+ship,das Schiff
+Travel date,der Reisetermin
+Juice,der Saft
+Bedroom,das Schlafzimmer
+Balcony,der Balkon
+Actor|performer(male),der Darsteller
+Appointment|date,der Termin
+ticket(travel ticket),die Fahrkarte
+drawer(furniture),die Schublade
+one-way street,die Einbahn
+Invitation,die Einladung
+Nobody,der Niemand
+Roof/Housetop,das Dach
+Laundry,die Wäsche
+floor(referring the floor in a building),der Stock
+Monitor(display/screen),der Bildschirm
+stairs/staircase,die Treppe
+dustbin/trash can,der Mülleimer
+participant/attendee(male),der Teilnehmer
+part/piece,das Stück
+place/seat/space/square(Used for physical spaces|open areas and seats),der Platz
+Waste/trash/garbage,der Müll
+Family doctor/General practitioner(male),der Hausarzt
+Help,die Hilfe
+colleague(male) and colleague(female),der Kollege und die Kollegin 
+Onion and Onions,die Zwiebel und die Zwiebeln
+Classified ad,die Kleinanzeige
+Language and Languages,die Sprache und die Sprachen
+Murder,der Mord
+Snow,der Schnee
+Microwave,die Mikrowelle
+Dust,der Staub
+Vacuum cleaner,der Staubsauger
+Scarf(dress),der Schal
+pan(kitchen utensil),die Pfanne
+Duck,die Ente
+Today,heute
+yesterday,gestern
+possible|potential|feasible,möglich
+some/somewhat,etwas
+in the evening,abends
+clear/obvious,klar
+exact/precise/accurate,genau
+similar/same/as usual,gleich
+Awake/alert,wach
+Last/final(in masculine form),letzter
+therefore/hence/thus(formal and casual),deshalb
+afterwards,danach
+best(in masculine form),bester
+now,jetzt
+immediately | at once ,sofort
+favourite (eg: favourite book),lieblings
+on it/about it (eg i think about it| i am working on it,daran
+actually,eigentlich
+special(eg: specialtrain),sonder
+far|wide,weit
+awful|terrible,schrecklich
+hopefully,hoffentlich
+Bummer(what a shame/bummer),schade
+Crazy/mad,verrückt
+ready|finished|completed,fertig
+approximately/roughly/about(everyday speech),ungefähr
+approximately/roughly/about(used formally and in written language),circa
+self(to indicate that so is doing smth by themselves),selbst
+usually|typically|normally,normalerweise
+most(referring a large qty or number) - Most people like ice cream,meisten
+mostly|usually and mostly|usually(emphasised),meist und meistens
+soon|shortly,bald
+likewise,gleichfalls
+entire/whole(masculine),ganzer
+little/few(referring small amount of smt),wenig
+illegal/prohibited/banned,verboten
+pure,rein
+quite/fairly/rather(to express a moderate degree of intensity or extent) eg quite large,ziemlich
+strong/powerful/robust,stark
+fluent,fließend
+opened,geöffnet
+closed,geschlossen
+exciting|fascinating,spanned
+hungry,hungrig
+thirsty,durstig
+full(used for objects|containers|spaces) - eg The bus is full,voll
+full/satisfied(used for people) eg : i am full(from eating),satt
+before(adverb),vorher
+young and younger,jung und jünger
+often,oft
+worse,schlimmer
+divorced,geschieden
+late and later and too late,spät und später und zu spät
+loud,laut
+logical|consistent,logisch
+serious | seriously(adv),ernst
+daily|everyday,täglich
+high/tall,hoch
+naked,nackt
+lazy,faul
+throughout|all over|all around - location based,überall
+whole|complete|entire,ganz
+famous|renowned,berühmt
+Patient(masculine) and Patients(plural) - medical patient,der Patient und die Patientin
+Diet,die Diät
+Emergency call/helpline,der Notruf
+Accident,der Unfall
+Tram,die Straßenbahn
+Sink/Kitchen sink,die Spüle
+Dishwasher,die Spülmaschine
+Battery and Rechargeable Battery,die Batterie und der Akku
+Luggage,das Gepäck
+Backpack,der Rucksack
+Pain/Ache,der Schmerz
+Motorcycle,das Motorrad
+Peanut,die Erdnuss
+Bride,die Braut
+Beer(beverage),das Bier
+School student(M) and college Student,der Schüler und der Student
+owner(M),der Besitzer
+Lion(M),der Löwe
+Heating,die Heizung
+Fence(as in house fence),der Zaun
+Tunnel,der Tunnel
+shelf(furniture),das Regal
+rule/norm,die Regel
+dream,der Traum
+permission,die Erlaubnis
+exercise|practice,die Übung
+result,das Ergebnis
+blood,das Blut
+home remedy,das Hausmittel
+basement,der Keller
+corner(as in corner of room),die Ecke
+garden,der Garten
+church,die Kirche
+cherry,die Kirsche
+stadium,das Stadion
+View / Visibility,die Sicht
+Relative(family),der Verwandte
+Basket,der Korb
+Chance,die Chance
+Dress,das Kleid
+Weather,das Wetter
+desk/writing table,der Schreibtisch
+living room,das Wohnzimmer
+oven,der Ofen
+center/middle,das Zentrum
+shopping mall,das Einkaufszentrum
+university,die Universität
+traffic,der Verkehr
+dishes|crockery,das Geschirr
+harm|suffering,das Leid
+wedding,die Hochzeit
+Driving licence,der Führerschein
+Hotel,das Hotel
+Aeroplane,das Flugzeug
+mother tongue,die Muttersprache
+Team(sports or military),die Mannschaft
+Customer(Male),der Kunde
+Mistake,der Fehler
+Bridge(construction),die Brücke
+flower vase,die Blumenvase
+sound|noise,das Geräusch
+wallet,die Geldbörse
+valley,das Tal
+fever,das Fieber
+Trip,die Reise
+chewing gum,der Kaugummi
+Plant(botanical),die Pflanze
+Holiday,der Urlaub
+State and States(states in germany),das Bundesland and die Bundeslände
+the rest / the remainder (what's left over or what remains of something),der Rest
+type/kind/variety,die Art
+german parliament,der Bundestag
+capital(country capital),die Hauptstadt
+ear and ears,das Ohr und die Ohren
+Author(Male),der Autor
+groceries,das Lebensmittel
