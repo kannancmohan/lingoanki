@@ -13,6 +13,30 @@ interface TestState {
     error: string | null;
 }
 
+// In-memory mock for the localStorage API to prevent deleting user's real data
+const createMockLocalStorage = (): Storage => {
+  let store: { [key: string]: string } = {};
+  return {
+    getItem: (key: string): string | null => store[key] || null,
+    setItem: (key: string, value: string): void => {
+      store[key] = value.toString();
+    },
+    removeItem: (key: string): void => {
+      delete store[key];
+    },
+    clear: (): void => {
+      store = {};
+    },
+    get length(): number {
+      return Object.keys(store).length;
+    },
+    key: (index: number): string | null => {
+      const keys = Object.keys(store);
+      return keys[index] || null;
+    },
+  };
+};
+
 
 // Test Runner Component
 const TestRunner: React.FC = () => {
@@ -23,32 +47,40 @@ const TestRunner: React.FC = () => {
 
     const runTests = async () => {
         setIsTesting(true);
+        setResults(allTestCases.map(tc => ({ name: tc.name, status: 'idle', error: null })));
 
-        // Create a mutable copy of the initial state, with an explicit type to prevent inference errors.
-        const currentResults: TestState[] = allTestCases.map(tc => ({ name: tc.name, status: 'idle', error: null }));
-        setResults(currentResults);
+        // IMPORTANT: Isolate tests from the user's real data
+        const realLocalStorage = window.localStorage;
+        Object.defineProperty(window, 'localStorage', {
+            value: createMockLocalStorage(),
+            writable: true,
+        });
 
+        try {
+            for (let i = 0; i < allTestCases.length; i++) {
+                localStorage.clear(); // Clear the MOCK storage for isolation
 
-        for (let i = 0; i < allTestCases.length; i++) {
-            // Setup: clear localStorage before each test for isolation
-            localStorage.clear();
-            
-            currentResults[i] = { ...currentResults[i], status: 'running' };
-            setResults([...currentResults]);
+                // Update UI to show test is running
+                setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'running' } : r));
 
-            try {
-                await allTestCases[i].testFn();
-                currentResults[i] = { ...currentResults[i], status: 'passed', error: null };
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-                currentResults[i] = { ...currentResults[i], status: 'failed', error: errorMessage };
-            } finally {
-                setResults([...currentResults]);
-                // Teardown: clear localStorage after each test
-                localStorage.clear();
+                try {
+                    await allTestCases[i].testFn();
+                    // Set status to 'passed'
+                    setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'passed', error: null } : r));
+                } catch (err) {
+                    const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+                    // Set status to 'failed'
+                    setResults(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'failed', error: errorMessage } : r));
+                }
             }
+        } finally {
+            // IMPORTANT: Restore the real localStorage regardless of test outcomes
+            Object.defineProperty(window, 'localStorage', {
+                value: realLocalStorage,
+                writable: true,
+            });
+            setIsTesting(false);
         }
-        setIsTesting(false);
     };
 
     return (

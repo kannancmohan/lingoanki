@@ -25,6 +25,12 @@ export const getQuiz = (quizId: string): Quiz | undefined => {
 
 export const createQuiz = (name: string, csvData: string): CreateQuizResult => {
     const quizzes = getQuizzes();
+    const normalizedNewName = name.trim().toLowerCase();
+
+    if (quizzes.some(quiz => quiz.name.trim().toLowerCase() === normalizedNewName)) {
+        throw new Error(`A quiz with the name "${name.trim()}" already exists. Please choose a different name.`);
+    }
+
     const quizId = `quiz_${Date.now()}`;
 
     let content = csvData;
@@ -98,7 +104,7 @@ export const createQuiz = (name: string, csvData: string): CreateQuizResult => {
 
     const newQuiz: Quiz = {
         id: quizId,
-        name,
+        name: name.trim(),
         cards: createdCards,
         createdAt: Date.now(),
     };

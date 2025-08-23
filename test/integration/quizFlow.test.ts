@@ -150,5 +150,40 @@ export const quizFlowTests: TestCase[] = [
             expect(savedCard3.interval).toBe(easyReviewedCard.interval);
             expect(savedCard3.easeFactor).toBe(easyReviewedCard.easeFactor);
         }
+    },
+    {
+        name: 'Integration Test: Prevents creating quizzes with duplicate names',
+        testFn: async () => {
+            const quizName = "Duplicate Test Quiz";
+    
+            // 1. Create the first quiz successfully
+            createQuiz(quizName, "a,b");
+            let quizzes = getQuizzes();
+            expect(quizzes).toHaveLength(1);
+            expect(quizzes[0].name).toBe(quizName);
+    
+            // 2. Attempt to create a duplicate and expect an error
+            let errorThrown = false;
+            const duplicateAttemptName = `  ${quizName.toUpperCase()}  `;
+            try {
+                // Attempt with same name but different casing and whitespace
+                createQuiz(duplicateAttemptName, "c,d");
+            } catch (error) {
+                errorThrown = true;
+                expect(error instanceof Error).toBe(true);
+                if (error instanceof Error) {
+                    expect(error.message).toBe(`A quiz with the name "${duplicateAttemptName.trim()}" already exists. Please choose a different name.`);
+                }
+            }
+            
+            // 3. Verify that an error was indeed thrown
+            if (!errorThrown) {
+                throw new Error("Expected createQuiz to throw an error for a duplicate name, but it did not.");
+            }
+            
+            // 4. Verify that no new quiz was added
+            quizzes = getQuizzes();
+            expect(quizzes).toHaveLength(1);
+        }
     }
 ];
