@@ -1,6 +1,6 @@
-import { createQuiz, getQuizzes, calculateQuizMastery, updateQuiz } from '../../services/quizService';
+import { createQuiz, getQuizzes, calculateQuizMastery, updateQuiz, createNewCard } from '../../services/quizService';
 import { updateCard } from '../../services/srsService';
-import { ReviewRating, Quiz } from '../../types';
+import { ReviewRating, Quiz, Card, ImportWarning } from '../../types';
 import { INITIAL_EASE_FACTOR, AGAIN_INTERVAL, GOOD_INTERVAL, EASY_GRADUATING_INTERVAL, GRADUATING_INTERVAL } from '../../constants';
 import { expect, TestCase } from '../test-utils';
 
@@ -184,6 +184,101 @@ export const quizFlowTests: TestCase[] = [
             // 4. Verify that no new quiz was added
             quizzes = getQuizzes();
             expect(quizzes).toHaveLength(1);
+        }
+    },
+    {
+        name: 'Integration Test: Appends cards from CSV, skipping duplicates and invalid lines',
+        testFn: async () => {
+            // 1. Setup initial quiz
+            const { newQuiz } = createQuiz("Append Test Quiz", "apple,der Apfel\ncar,das Auto");
+            let quiz = getQuizzes().find(q => q.id === newQuiz.id)!;
+            expect(quiz.cards.length).toBe(2);
+
+            // 2. CSV data to append
+            const csvToAppend = `
+car,das Auto # This is a duplicate
+bike,das Fahrrad
+,empty front
+invalid line
+"Apple","der Apfel (duplicate with different casing/quote)"
+            `;
+
+            // 3. Simulate the append logic from EditQuizPage
+            const existingCards = [...quiz.cards];
+            let content = csvToAppend;
+            const lines = content.split(/\r?\n/);
+            const addedCards: Card[] = [];
+            const skipped: ImportWarning[] = [];
+            const existingFronts = new Set(existingCards.map(c => c.front.trim().toLowerCase()));
+
+            lines.forEach((line, index) => {
+                const lineNumber = index + 1;
+                const trimmedLine = line.trim();
+
+                if (!trimmedLine) return;
+
+                const cleanField = (field: string | undefined): string => {
+                    if (!field) return '';
+                    let cleaned = field.trim();
+                    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+                        cleaned = cleaned.substring(1, cleaned.length - 1);
+                    }
+                    return cleaned.replace(/\s+/g, ' ').trim();
+                };
+
+                if (!trimmedLine.includes(',')) {
+                    skipped.push({ line: lineNumber, content: trimmedLine, reason: 'Line does not contain a comma separator.' });
+                    return;
+                }
+
+                const parts = trimmedLine.split(',');
+                const front = cleanField(parts[0]);
+                const back = cleanField(parts.slice(1).join(','));
+
+                if (!front || !back) {
+                    skipped.push({ line: lineNumber, content: trimmedLine, reason: 'One or more fields are empty.' });
+                    return;
+                }
+
+                const normalizedFront = front.trim().toLowerCase();
+                if (existingFronts.has(normalizedFront)) {
+                    skipped.push({ line: lineNumber, content: trimmedLine, reason: `Duplicate entry for "${front}".` });
+                    return;
+                }
+
+                const newCard = createNewCard(quiz.id);
+                newCard.front = front;
+                newCard.back = back;
+                addedCards.push(newCard);
+                existingFronts.add(normalizedFront);
+            });
+            
+            const finalCards = [...existingCards, ...addedCards];
+
+            // 4. Assertions
+            expect(finalCards.length).toBe(3); // 2 initial + 1 new ("bike")
+            expect(addedCards.length).toBe(1);
+            expect(addedCards[0].front).toBe("bike");
+
+            const bikeCard = finalCards.find(c => c.front === 'bike');
+            expect(bikeCard).toBeDefined();
+
+            const appleCard = finalCards.find(c => c.front === 'apple');
+            expect(appleCard?.back).toBe('der Apfel'); // ensure original wasn't overwritten
+
+            expect(skipped.length).toBe(4); // duplicate car, empty front, invalid line, duplicate apple
+            
+            const duplicateReason1 = skipped.find(s => s.content.includes('car'));
+            expect(duplicateReason1?.reason).toBe('Duplicate entry for "car".');
+            
+            const emptyFrontReason = skipped.find(s => s.content.includes('empty front'));
+            expect(emptyFrontReason?.reason).toBe('One or more fields are empty.');
+            
+            const invalidLineReason = skipped.find(s => s.content.includes('invalid line'));
+            expect(invalidLineReason?.reason).toBe('Line does not contain a comma separator.');
+
+            const duplicateReason2 = skipped.find(s => s.content.includes('Apple'));
+            expect(duplicateReason2?.reason).toBe('Duplicate entry for "Apple".');
         }
     }
 ];

@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Quiz, Card } from '../types';
+import { Quiz, Card, ImportWarning } from '../types';
 import { createNewCard } from '../services/quizService';
-import { TrashIcon, PlusIcon } from './icons';
+import { TrashIcon, PlusIcon, UploadIcon } from './icons';
 import { ErrorModal } from './ErrorModal';
+import { ImportResultModal } from './ImportResultModal';
 
 interface EditQuizPageProps {
   quiz: Quiz;
@@ -14,11 +15,11 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
   const [quizName, setQuizName] = useState(quiz.name);
   const [cards, setCards] = useState<Card[]>(quiz.cards);
   const [modalError, setModalError] = useState<{ title: string; message: string; } | null>(null);
+  const [importResult, setImportResult] = useState<{ addedCount: number; skipped: ImportWarning[] } | null>(null);
 
-  // Ref to hold the input elements for each card
   const cardInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
-  // State to track the ID of the newly added card to trigger the scroll/focus effect
   const [newlyAddedCardId, setNewlyAddedCardId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
 
   const handleCardChange = useCallback((cardId: string, field: 'front' | 'back', value: string) => {
@@ -36,50 +37,118 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
   const handleAddCard = useCallback(() => {
     const newCard = createNewCard(quiz.id);
     setCards(currentCards => [...currentCards, newCard]);
-    // Set the ID of the new card to trigger the effect
     setNewlyAddedCardId(newCard.id);
   }, [quiz.id]);
   
-  // Effect to scroll to and focus the new card's input
   useEffect(() => {
     if (newlyAddedCardId) {
       const inputEl = cardInputRefs.current.get(newlyAddedCardId);
       if (inputEl) {
         inputEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        inputEl.focus({ preventScroll: true }); // preventScroll as scrollIntoView is handling it
+        inputEl.focus({ preventScroll: true });
       }
-      // Reset the ID after the effect runs to prevent re-triggering
       setNewlyAddedCardId(null);
     }
   }, [newlyAddedCardId, cards]);
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+        let content = await file.text();
+        if (content.startsWith('\uFEFF')) {
+            content = content.substring(1);
+        }
+
+        const lines = content.split(/\r?\n/);
+        const addedCards: Card[] = [];
+        const skipped: ImportWarning[] = [];
+        
+        const existingFronts = new Set(cards.map(c => c.front.trim().toLowerCase()));
+
+        lines.forEach((line, index) => {
+            const lineNumber = index + 1;
+            const trimmedLine = line.trim();
+
+            if (!trimmedLine) return;
+
+            const cleanField = (field: string | undefined): string => {
+                if (!field) return '';
+                let cleaned = field.trim();
+                if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+                    cleaned = cleaned.substring(1, cleaned.length - 1);
+                }
+                return cleaned.replace(/\s+/g, ' ').trim();
+            };
+
+            if (!trimmedLine.includes(',')) {
+                skipped.push({ line: lineNumber, content: trimmedLine, reason: 'Line does not contain a comma separator.' });
+                return;
+            }
+
+            const parts = trimmedLine.split(',');
+            const front = cleanField(parts[0]);
+            const back = cleanField(parts.slice(1).join(','));
+
+            if (!front || !back) {
+                skipped.push({ line: lineNumber, content: trimmedLine, reason: 'One or more fields are empty.' });
+                return;
+            }
+
+            const normalizedFront = front.trim().toLowerCase();
+            if (existingFronts.has(normalizedFront)) {
+                skipped.push({ line: lineNumber, content: trimmedLine, reason: `Duplicate entry for "${front}".` });
+                return;
+            }
+
+            const newCard = createNewCard(quiz.id);
+            newCard.front = front;
+            newCard.back = back;
+            addedCards.push(newCard);
+            
+            existingFronts.add(normalizedFront);
+        });
+
+        if (addedCards.length > 0) {
+            setCards(prev => [...prev, ...addedCards]);
+        }
+        
+        setImportResult({ addedCount: addedCards.length, skipped });
+        
+    } catch (error) {
+        setModalError({ title: 'Import Error', message: `Could not process the file. ${error instanceof Error ? error.message : ''}` });
+    } finally {
+        if (e.target) e.target.value = '';
+    }
+  };
 
   const handleSave = () => {
-    // 1. Check for empty quiz name
     if (!quizName.trim()) {
         setModalError({ title: 'Invalid Quiz Name', message: 'Quiz name cannot be empty. Please provide a name for your quiz.' });
         return;
     }
 
-    // 2. Check for cards with empty fronts or backs
     const invalidCard = cards.find(c => !c.front.trim() || !c.back.trim());
     if (invalidCard) {
         setModalError({ title: 'Incomplete Card', message: 'All cards must have both a front and a back value. Please fill them out or delete the empty card.' });
         return;
     }
 
-    // 3. Check for duplicate card fronts (case-insensitive)
     const seenFronts = new Set<string>();
     for (const card of cards) {
       const normalizedFront = card.front.trim().toLowerCase();
-      // Only check non-empty fronts, which is guaranteed by check #2, but good for safety
       if (normalizedFront) {
         if (seenFronts.has(normalizedFront)) {
           setModalError({
             title: 'Duplicate Card Found',
             message: `The card front "${card.front.trim()}" is used more than once. Please ensure all card fronts are unique.`
           });
-          return; // Stop the save
+          return;
         }
         seenFronts.add(normalizedFront);
       }
@@ -95,9 +164,14 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4 py-8">
+       <input type="file" ref={fileInputRef} onChange={handleFileSelected} className="hidden" accept=".csv, text/csv" />
       <div className="flex justify-between items-center mb-6">
         <button onClick={onCancel} className="text-slate-400 hover:text-white transition-colors">&larr; Back to Quizzes</button>
         <div className="flex items-center gap-4">
+            <button onClick={handleImportClick} className="flex items-center gap-2 bg-transparent border border-slate-600 text-slate-300 font-semibold px-4 py-2 rounded-lg hover:bg-slate-700 hover:text-white transition-colors">
+                <UploadIcon className="w-5 h-5"/>
+                Import from CSV
+            </button>
             <button onClick={handleAddCard} className="flex items-center gap-2 bg-transparent border border-slate-600 text-slate-300 font-semibold px-4 py-2 rounded-lg hover:bg-slate-700 hover:text-white transition-colors">
                 <PlusIcon className="w-5 h-5"/>
                 Add New Card
@@ -131,7 +205,6 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
                     <div className="col-span-1 text-slate-400 text-sm">{index + 1}</div>
                     <div className="col-span-5">
                         <input
-                            // Attach the ref to the input element
                             ref={(el) => {
                               if (el) {
                                   cardInputRefs.current.set(card.id, el);
@@ -183,6 +256,12 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
           title={modalError.title} 
           message={modalError.message} 
           onClose={() => setModalError(null)} 
+        />
+      )}
+      {importResult && (
+        <ImportResultModal 
+          results={importResult}
+          onClose={() => setImportResult(null)}
         />
       )}
     </div>
