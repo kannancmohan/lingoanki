@@ -14,11 +14,7 @@
       {
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
-            # Node.js and npm
-            nodejs_20
-            nodePackages.npm
-            
-            # Development tools
+            nodejs_22
             git
           ];
 
@@ -37,19 +33,12 @@
           NODE_ENV = "development";
         };
 
-        # Development shell with additional tools
         devShells.full = pkgs.mkShell {
           buildInputs = with pkgs; [
-            # Node.js and npm
-            nodejs_20
-            nodePackages.npm
-            
-            # Development tools
+            nodejs_22
             git
-            
             # Code quality tools (optional - not configured in project)
             nodePackages.typescript
-            
             # Useful development tools
             ripgrep
             fd
@@ -76,7 +65,6 @@
           NODE_ENV = "development";
         };
 
-        # Packages for building
         packages = {
           default = pkgs.stdenv.mkDerivation {
             pname = "lingo-anki";
@@ -85,8 +73,7 @@
             src = ./.;
             
             nativeBuildInputs = with pkgs; [
-              nodejs_20
-              nodePackages.npm
+              nodejs_22
             ];
             
             buildPhase = ''
