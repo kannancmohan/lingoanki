@@ -1,18 +1,18 @@
-# LingoAnki - German Learner
+# LingoPriority - Vocabulary Trainer
 
-A simple Anki-like application to help you learn German words through interactive quizzes. Import your own word lists via CSV, track your progress with a spaced repetition system, and master your vocabulary.
+A smart flashcard application designed to help you learn vocabulary efficiently using a **Priority-Aware Weighted Random Sampling (PAWRS)** system. Import your own word lists via CSV, prioritize cards based on difficulty, and master your vocabulary.
 
-![LingoAnki Screenshot](https://placehold.co/800x450/0f172a/ffffff?text=LingoAnki+App+UI)
+![LingoPriority Screenshot](https://placehold.co/800x450/0f172a/ffffff?text=LingoPriority+App+UI)
 
 ---
 
 ## ✨ Features
 
 - **CSV Import**: Easily create new quizzes by uploading a `.csv` file of words and translations.
-- **Spaced Repetition System (SRS)**: An intelligent algorithm schedules reviews to maximize learning efficiency. The next review interval is shown on each rating button.
+- **Priority-Aware Weighted Random Sampling (PAWRS)**: Instead of a rigid schedule, this system intelligently selects cards for your session based on priorities you set. More difficult cards appear more frequently.
 - **Interactive Quizzes**: Engage with your vocabulary through a clean and focused quiz interface.
-- **Progress Tracking**: Monitor your mastery for each quiz. Mastery is a score that grows as you learn new cards and strengthen your memory of existing ones through repeated, correct reviews. This score can go beyond 100% to reflect deep learning.
-- **Keyboard Shortcuts**: Learn faster with keyboard controls for rating cards (1-4).
+- **Progress Tracking**: Monitor your "Mastery" for each quiz, a score that reflects how well you know the material based on your assigned priorities.
+- **Keyboard Shortcuts**: Learn faster with keyboard controls for rating cards (1-3).
 - **Fully Responsive**: Learn on any device, desktop or mobile.
 - **No Backend Needed**: Runs entirely in your browser using `localStorage`.
 
@@ -109,44 +109,29 @@ If you prefer not to use Nix, you can install the dependencies on your system di
       water,das Wasser
       street,die Straße
       ```
-    - Upload the file and create the quiz.
+    - Upload the file and create the quiz. All new cards start with "Unset" priority.
 
 2.  **Start Learning**:
     - Click on your new quiz from the list to start a session.
     - Type the translation and press Enter.
-    - After the answer is revealed, rate your recall using the buttons or number keys (1-4). The app will show you an estimate of when you'll see the card next based on your choice.
+    - After the answer is revealed, assign a priority using the buttons or number keys (1-3). This tells the app how often to show you the card in future sessions.
 
-### Understanding the Ratings
+### Understanding the Priorities
 
-Here’s a quick guide on what the ratings mean for the next review time:
+The PAWRS algorithm uses weights to build your study session. Cards with a higher priority are more likely to be included.
 
-*   **Again (1)**: You didn't know the answer. The card will be shown again soon in the current session (if enabled) and will be due for your very next session. Its learning progress is reset.
-*   **Hard (2)**: You struggled to remember. The time until the next review will increase by a small amount compared to the previous interval.
-*   **Good (3)**: The default for a correct answer. The time until the next review increases significantly (e.g., from 1 day to 2.5 days). New cards are shown again in about 10 minutes.
-*   **Easy (4)**: You knew it instantly. The time until the next review increases even more. New cards graduate immediately and will be shown again in 4 days.
+*   **Hard (High Priority - 1)**: You didn't know the answer or struggled a lot. These cards have the **highest chance (40%)** of appearing in a session. Answering incorrectly automatically sets a card to High priority.
+*   **Medium (2)**: You hesitated but got it right. These cards have a **medium chance (30%)** of appearing.
+*   **Easy (Low Priority - 3)**: You knew it instantly. These cards have the **lowest chance (20%)** of appearing, so you can focus on more difficult material.
+*   **Unset**: New cards that haven't been rated yet. They have a **small chance (10%)** of being chosen, ensuring you're always introducing new material.
 
 ## 🧪 Running Tests
 
-This project includes a simple, in-browser test suite for verifying core functionality.
+This project includes an in-browser test suite.
 
-1.  **Start the development server**:
-    ```bash
-    # With Nix
-    nix develop
-    make run
-    
-    # Without Nix
-    npm run dev
-    ```
-
-2.  **Open the Test Runner**:
-    Once the server is running, navigate to the following URL in your browser:
-    [`http://localhost:5173/test/index.html`](http://localhost:5173/test/index.html)
-
-3.  **Run the Tests**:
-    Click the "Run All Tests" button to execute the test suite. The results will be displayed on the page.
-
-The tests run in an isolated manner, clearing any stored data before each test case to ensure there are no side effects.
+1.  **Start the development server**: `npm run dev`
+2.  **Open the Test Runner**: Navigate to [`http://localhost:5173/test/index.html`](http://localhost:5173/test/index.html) in your browser.
+3.  **Run the Tests**: Click the "Run All Tests" button.
 
 ---
 

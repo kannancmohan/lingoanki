@@ -1,5 +1,6 @@
-import { Quiz, Card, ImportWarning } from '../types';
-import { INITIAL_EASE_FACTOR } from '../constants';
+import { Quiz, Card, ImportWarning, Priority } from '../types';
+// FIX: Import default ease factor for card initialization
+import { DEFAULT_EASE_FACTOR } from '../constants';
 
 const QUIZZES_KEY = 'lingoAnkiQuizzes';
 
@@ -34,7 +35,7 @@ export const createQuiz = (name: string, csvData: string): CreateQuizResult => {
     const quizId = `quiz_${Date.now()}`;
 
     let content = csvData;
-    if (content.startsWith('\uFEFF')) {
+    if (content.startsWith('﻿')) {
         content = content.substring(1);
     }
 
@@ -87,14 +88,14 @@ export const createQuiz = (name: string, csvData: string): CreateQuizResult => {
             quizId,
             front,
             back,
-            dueDate: Date.now(),
-            interval: 0,
-            easeFactor: INITIAL_EASE_FACTOR,
-            repetitions: 0,
-            isNew: true,
+            priority: Priority.Unset,
             timesSeen: 0,
             timesCorrect: 0,
             timesIncorrect: 0,
+            // FIX: Initialize new SRS properties for the card
+            repetitions: 0,
+            interval: 0,
+            easeFactor: DEFAULT_EASE_FACTOR,
         });
     });
     
@@ -136,33 +137,35 @@ export const calculateQuizMastery = (quiz: Quiz): number => {
     }
     
     const totalPoints = quiz.cards.reduce((acc, card) => {
-        if (card.repetitions > 0) {
-            const basePoint = 1;
-            const bonusPoints = Math.max(0, card.repetitions - 1) * 0.2;
-            return acc + basePoint + bonusPoints;
+        switch (card.priority) {
+            case Priority.Low: return acc + 100;
+            case Priority.Medium: return acc + 50;
+            case Priority.High: return acc + 25;
+            case Priority.Unset:
+            default:
+                return acc + 0;
         }
-        return acc;
     }, 0);
 
-    const mastery = (totalPoints / quiz.cards.length) * 100;
+    const mastery = totalPoints / quiz.cards.length;
 
     return Math.round(mastery);
 };
 
-export const resetQuizMastery = (quizId: string): void => {
+export const resetPriorities = (quizId: string): void => {
     const quiz = getQuiz(quizId);
     if (!quiz) return;
 
     const resetCards = quiz.cards.map(card => ({
         ...card,
-        isNew: true,
-        dueDate: Date.now(),
-        interval: 0,
-        easeFactor: INITIAL_EASE_FACTOR,
-        repetitions: 0,
+        priority: Priority.Unset,
         timesSeen: 0,
         timesCorrect: 0,
         timesIncorrect: 0,
+        // FIX: Also reset new SRS properties
+        repetitions: 0,
+        interval: 0,
+        easeFactor: DEFAULT_EASE_FACTOR,
     }));
 
     const updatedQuiz = { ...quiz, cards: resetCards };
@@ -175,13 +178,13 @@ export const createNewCard = (quizId: string): Card => {
         quizId,
         front: '',
         back: '',
-        dueDate: Date.now(),
-        interval: 0,
-        easeFactor: INITIAL_EASE_FACTOR,
-        repetitions: 0,
-        isNew: true,
+        priority: Priority.Unset,
         timesSeen: 0,
         timesCorrect: 0,
         timesIncorrect: 0,
+        // FIX: Initialize new SRS properties for the card
+        repetitions: 0,
+        interval: 0,
+        easeFactor: DEFAULT_EASE_FACTOR,
     };
 };

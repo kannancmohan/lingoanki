@@ -1,121 +1,120 @@
-import { updateCard } from '../../services/srsService';
-import { Card, ReviewRating } from '../../types';
-import { INITIAL_EASE_FACTOR, AGAIN_INTERVAL, GOOD_INTERVAL, EASY_GRADUATING_INTERVAL, GRADUATING_INTERVAL, MIN_EASE_FACTOR, HARD_INTERVAL } from '../../constants';
+import { selectSessionCards } from '../../services/srsService';
+import { Card, Priority, Quiz } from '../../types';
 import { expect, TestCase } from '../test-utils';
+// FIX: Import DEFAULT_EASE_FACTOR to initialize new card properties.
+import { DEFAULT_EASE_FACTOR } from '../../constants';
 
-// Helper to check if a dueDate is approximately correct, allowing for small delays in test execution
-const expectDueDateApprox = (actual: number, expected: number) => {
-    const tolerance = 100; // ms
-    if (Math.abs(actual - expected) > tolerance) {
-        throw new Error(`Expected dueDate ${actual} to be approximately ${expected} (within ${tolerance}ms)`);
-    }
-};
+const createTestCard = (id: number, priority: Priority): Card => ({
+    id: `card_${id}`,
+    quizId: 'quiz_test',
+    front: `f${id}`,
+    back: `b${id}`,
+    priority,
+    timesSeen: 0,
+    timesCorrect: 0,
+    timesIncorrect: 0,
+    // FIX: Add missing properties to align with the Card type.
+    repetitions: 0,
+    interval: 0,
+    easeFactor: DEFAULT_EASE_FACTOR,
+});
 
-export const srsServiceTests: TestCase[] = [
-    {
-        name: 'SRS Unit Test: Verify logic for card updates including due dates',
-        testFn: async () => {
-            const createNewCard = (): Card => ({
-                id: 'card_test_srs',
-                quizId: 'quiz_test_srs',
-                front: 'Front',
-                back: 'Back',
-                dueDate: Date.now(),
-                interval: 0,
-                easeFactor: INITIAL_EASE_FACTOR,
-                repetitions: 0,
-                isNew: true,
-                timesSeen: 0,
-                timesCorrect: 0,
-                timesIncorrect: 0,
-            });
-    
-            // Sub-test 1: New card rated 'Again'
-            let card = createNewCard();
-            let now = Date.now();
-            let updatedCard = updateCard(card, ReviewRating.Again);
-            expect(updatedCard.repetitions).toBe(0);
-            expect(updatedCard.interval).toBe(AGAIN_INTERVAL);
-            expect(updatedCard.easeFactor).toBe(INITIAL_EASE_FACTOR - 0.20);
-            expect(updatedCard.isNew).toBe(false);
-            expectDueDateApprox(updatedCard.dueDate, now); // Should be due immediately
-    
-            // Sub-test 2: New card rated 'Hard'
-            card = createNewCard();
-            now = Date.now();
-            updatedCard = updateCard(card, ReviewRating.Hard);
-            expect(updatedCard.repetitions).toBe(1);
-            expect(updatedCard.interval).toBe(HARD_INTERVAL);
-            expect(updatedCard.easeFactor).toBe(INITIAL_EASE_FACTOR);
-            expect(updatedCard.isNew).toBe(false);
-            expectDueDateApprox(updatedCard.dueDate, now + HARD_INTERVAL * 60 * 1000);
-
-            // Sub-test 3: New card rated 'Good'
-            card = createNewCard();
-            now = Date.now();
-            updatedCard = updateCard(card, ReviewRating.Good);
-            expect(updatedCard.repetitions).toBe(1);
-            expect(updatedCard.interval).toBe(GOOD_INTERVAL);
-            expect(updatedCard.easeFactor).toBe(INITIAL_EASE_FACTOR);
-            expect(updatedCard.isNew).toBe(false);
-            expectDueDateApprox(updatedCard.dueDate, now + GOOD_INTERVAL * 60 * 1000);
-
-            // Sub-test 4: New card rated 'Easy'
-            card = createNewCard();
-            now = Date.now();
-            updatedCard = updateCard(card, ReviewRating.Easy);
-            expect(updatedCard.repetitions).toBe(1);
-            expect(updatedCard.interval).toBe(EASY_GRADUATING_INTERVAL);
-            expect(updatedCard.easeFactor).toBe(INITIAL_EASE_FACTOR + 0.15);
-            expect(updatedCard.isNew).toBe(false);
-            expectDueDateApprox(updatedCard.dueDate, now + EASY_GRADUATING_INTERVAL * 60 * 1000);
-
-            // Sub-test 5: Graduating a card with 'Good', then 'Good'
-            card = createNewCard();
-            const learningCard = updateCard(card, ReviewRating.Good);
-            expect(learningCard.interval).toBe(GOOD_INTERVAL);
-            
-            now = Date.now();
-            const graduatedCard = updateCard(learningCard, ReviewRating.Good);
-            expect(graduatedCard.repetitions).toBe(2);
-            expect(graduatedCard.interval).toBe(GRADUATING_INTERVAL);
-            expect(graduatedCard.easeFactor).toBe(INITIAL_EASE_FACTOR);
-            expectDueDateApprox(graduatedCard.dueDate, now + GRADUATING_INTERVAL * 60 * 1000);
-            
-            // Sub-test 6: Reviewing a mature card
-            const matureCard = { ...graduatedCard, interval: 10 * 24 * 60 }; // Simulate a 10-day interval
-            matureCard.easeFactor = 2.5;
-    
-            // 6a: Mature card rated 'Hard'
-            now = Date.now();
-            const hardReview = updateCard(matureCard, ReviewRating.Hard);
-            expect(hardReview.interval).toBe(matureCard.interval * 1.2);
-            expect(hardReview.easeFactor).toBe(2.5 - 0.15);
-            expectDueDateApprox(hardReview.dueDate, now + hardReview.interval * 60 * 1000);
-
-            // 6b: Mature card rated 'Good'
-            now = Date.now();
-            const goodReview = updateCard(matureCard, ReviewRating.Good);
-            expect(goodReview.interval).toBe(matureCard.interval * matureCard.easeFactor);
-            expect(goodReview.easeFactor).toBe(2.5); // Unchanged
-            expectDueDateApprox(goodReview.dueDate, now + goodReview.interval * 60 * 1000);
-
-            // 6c: Mature card rated 'Easy'
-            now = Date.now();
-            const easyReview = updateCard(matureCard, ReviewRating.Easy);
-            expect(easyReview.interval).toBe(matureCard.interval * matureCard.easeFactor * 1.5);
-            expect(easyReview.easeFactor).toBe(2.5 + 0.15);
-            expectDueDateApprox(easyReview.dueDate, now + easyReview.interval * 60 * 1000);
-
-            // Sub-test 7: Ease factor does not go below minimum
-            card = createNewCard();
-            card.easeFactor = 1.35;
-            updatedCard = updateCard(card, ReviewRating.Again);
-            expect(updatedCard.easeFactor).toBe(MIN_EASE_FACTOR);
-
-            card.easeFactor = 1.25; // Start below minimum
-            updatedCard = updateCard(card, ReviewRating.Again);
-            expect(updatedCard.easeFactor).toBe(MIN_EASE_FACTOR);
+const createTestQuiz = (cardCounts: Record<Priority, number>): Quiz => {
+    const cards: Card[] = [];
+    let id = 1;
+    for (const priority in cardCounts) {
+        for (let i = 0; i < cardCounts[priority as Priority]; i++) {
+            cards.push(createTestCard(id++, priority as Priority));
         }
     }
+    return { id: 'quiz_test', name: 'Test Quiz', createdAt: Date.now(), cards };
+};
+
+export const pawrsServiceTests: TestCase[] = [
+    {
+        name: 'PAWRS Test: Returns all cards if total is less than session size',
+        testFn: () => {
+            const quiz = createTestQuiz({ High: 2, Medium: 3, Low: 4, Unset: 1 }); // 10 cards
+            const session = selectSessionCards(quiz, 20);
+            expect(session.length).toBe(10);
+        },
+    },
+    {
+        name: 'PAWRS Test: Returns correct number of cards for a session',
+        testFn: () => {
+            const quiz = createTestQuiz({ High: 10, Medium: 10, Low: 10, Unset: 10 });
+            const session = selectSessionCards(quiz, 20);
+            expect(session.length).toBe(20);
+        },
+    },
+    {
+        name: 'PAWRS Test: Approximates correct distribution with ample cards',
+        testFn: () => {
+            // Weights: High: 0.4, Medium: 0.3, Low: 0.2, Unset: 0.1
+            // Session Size: 100 -> High: 40, Medium: 30, Low: 20, Unset: 10
+            const quiz = createTestQuiz({ High: 50, Medium: 50, Low: 50, Unset: 50 });
+            const session = selectSessionCards(quiz, 100);
+            
+            const counts = { High: 0, Medium: 0, Low: 0, Unset: 0 };
+            session.forEach(card => counts[card.priority]++);
+
+            // Allow for rounding differences
+            const tolerance = 2;
+            if (Math.abs(counts.High - 40) > tolerance) throw new Error(`Expected ~40 High cards, got ${counts.High}`);
+            if (Math.abs(counts.Medium - 30) > tolerance) throw new Error(`Expected ~30 Medium cards, got ${counts.Medium}`);
+            if (Math.abs(counts.Low - 20) > tolerance) throw new Error(`Expected ~20 Low cards, got ${counts.Low}`);
+            if (Math.abs(counts.Unset - 10) > tolerance) throw new Error(`Expected ~10 Unset cards, got ${counts.Unset}`);
+        },
+    },
+    {
+        name: 'PAWRS Test: Redistributes weight when a priority group is empty',
+        testFn: () => {
+            // High is empty, its 40% weight should be redistributed.
+            // Remaining weights: Med: 0.3, Low: 0.2, Unset: 0.1 (Total: 0.6)
+            // Proportions: Med: 0.3/0.6=50%, Low: 0.2/0.6=33.3%, Unset: 0.1/0.6=16.7%
+            // Session of 30 -> Med: 15, Low: 10, Unset: 5
+            const quiz = createTestQuiz({ High: 0, Medium: 20, Low: 20, Unset: 20 });
+            const session = selectSessionCards(quiz, 30);
+            const counts = { High: 0, Medium: 0, Low: 0, Unset: 0 };
+            session.forEach(card => counts[card.priority]++);
+
+            expect(counts.High).toBe(0);
+            const tolerance = 2;
+            if (Math.abs(counts.Medium - 15) > tolerance) throw new Error(`Expected ~15 Medium cards, got ${counts.Medium}`);
+            if (Math.abs(counts.Low - 10) > tolerance) throw new Error(`Expected ~10 Low cards, got ${counts.Low}`);
+            if (Math.abs(counts.Unset - 5) > tolerance) throw new Error(`Expected ~5 Unset cards, got ${counts.Unset}`);
+            expect(session.length).toBe(30);
+        },
+    },
+    {
+        name: 'PAWRS Test: Handles insufficient cards in a high-priority group',
+        testFn: () => {
+            // Target for session of 20: High: 8, Med: 6, Low: 4, Unset: 2
+            // We only have 3 High cards. The shortfall of 5 should be filled by other groups.
+            const quiz = createTestQuiz({ High: 3, Medium: 20, Low: 20, Unset: 20 });
+            const session = selectSessionCards(quiz, 20);
+            const counts = { High: 0, Medium: 0, Low: 0, Unset: 0 };
+            session.forEach(card => counts[card.priority]++);
+
+            expect(counts.High).toBe(3); // Should take all available High cards
+            expect(session.length).toBe(20); // Should still fill the session
+        },
+    },
+    {
+        name: 'PAWRS Test: Fills session completely even with multiple empty/small groups',
+        testFn: () => {
+            // Only Low and Unset cards are available.
+            const quiz = createTestQuiz({ High: 0, Medium: 0, Low: 5, Unset: 5 });
+            const session = selectSessionCards(quiz, 8);
+
+            const counts = { High: 0, Medium: 0, Low: 0, Unset: 0 };
+            session.forEach(card => counts[card.priority]++);
+            
+            expect(session.length).toBe(8);
+            expect(counts.High).toBe(0);
+            expect(counts.Medium).toBe(0);
+            expect(counts.Low).toBe(5); // Takes all 5 Low cards
+            expect(counts.Unset).toBe(3); // Fills the rest with Unset
+        }
+    },
 ];

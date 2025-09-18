@@ -1,5 +1,5 @@
 {
-  "name": "lingo-anki",
+  "name": "lingo-priority",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -17,6 +17,6 @@
     "@types/react-dom": "^18.2.0",
     "@vitejs/plugin-react": "^4.2.1",
     "typescript": "^5.2.2",
-    "vite": "^7.1.5"
+    "vite": "^7.1.6"
   }
 }

@@ -1,103 +1,87 @@
-import { Card, Quiz, ReviewRating } from '../types';
-import { AGAIN_INTERVAL, GOOD_INTERVAL, MIN_EASE_FACTOR, GRADUATING_INTERVAL, EASY_GRADUATING_INTERVAL, HARD_INTERVAL } from '../constants';
+import { Card, Quiz, Priority } from '../types';
+import { PRIORITY_WEIGHTS } from '../constants';
 
-export const selectSessionCards = (quiz: Quiz, sessionSize: number, order: 'random' | 'sequential'): Card[] => {
-  const now = Date.now();
-  
-  // Cards that are not new and are due for review
-  const dueReviewCards = quiz.cards
-    .filter(card => !card.isNew && card.dueDate <= now);
+/**
+ * Selects N items for a Quiz from a pool based on user-defined priority weights.
+ * The algorithm adapts to edge cases (e.g., empty priority groups) while ensuring fairness and randomness.
+ * @param quiz The quiz to select cards from.
+ * @param sessionSize The number of cards (N) to select for the session.
+ * @returns An array of cards for the session.
+ */
+export const selectSessionCards = (quiz: Quiz, sessionSize: number): Card[] => {
+  const allCards = quiz.cards;
+  const totalCards = allCards.length;
 
-  // Cards that have never been answered correctly
-  const newCards = quiz.cards
-    .filter(card => card.isNew);
+  // 1. If total items < N, return all items shuffled.
+  if (totalCards <= sessionSize) {
+    return [...allCards].sort(() => 0.5 - Math.random());
+  }
 
-  let sessionDeck: Card[];
+  // 2. Group cards by priority.
+  const groups: Record<Priority, Card[]> = {
+    [Priority.High]: [],
+    [Priority.Medium]: [],
+    [Priority.Low]: [],
+    [Priority.Unset]: [],
+  };
+  allCards.forEach(card => {
+    const priority = card.priority || Priority.Unset;
+    groups[priority].push(card);
+  });
 
-  if (order === 'random') {
-    let potentialCards = [...dueReviewCards, ...newCards];
-    // Shuffle the entire deck of potential cards for this session
-    potentialCards.sort(() => 0.5 - Math.random());
-    sessionDeck = potentialCards;
-  } else { // 'sequential'
-    // Prioritize due cards, sorted by how long they've been due
-    dueReviewCards.sort((a, b) => a.dueDate - b.dueDate);
-    // New cards are already in the order they were imported
-    sessionDeck = [...dueReviewCards, ...newCards];
+  const sessionDeck: Card[] = [];
+  let remainingN = sessionSize;
+  let remainingWeight = 1.0;
+
+  const priorities: Priority[] = [Priority.High, Priority.Medium, Priority.Low, Priority.Unset];
+
+  // 3. Loop through priorities, selecting cards based on redistributed weights.
+  for (const priority of priorities) {
+    if (remainingN <= 0) break;
+
+    const group = groups[priority];
+    const groupWeight = PRIORITY_WEIGHTS[priority];
+    
+    // 4. If a group is empty, skip and redistribute its weight.
+    if (group.length === 0) {
+      remainingWeight -= groupWeight;
+      continue;
+    }
+
+    // Calculate how many to take from this group based on its share of the *remaining* weight and slots.
+    const targetCount = remainingWeight > 0 ? Math.round((groupWeight / remainingWeight) * remainingN) : remainingN;
+    const countToTake = Math.min(group.length, targetCount);
+
+    // 5. Use randomized selection within each priority group.
+    group.sort(() => 0.5 - Math.random());
+    sessionDeck.push(...group.slice(0, countToTake));
+
+    remainingN -= countToTake;
+    remainingWeight -= groupWeight;
   }
   
-  return sessionDeck.slice(0, sessionSize);
+  // 6. If there's a shortfall (due to rounding or empty groups), fill it from any remaining cards.
+  if (sessionDeck.length < sessionSize) {
+    const deckIds = new Set(sessionDeck.map(c => c.id));
+    const remainingCards = allCards
+      .filter(c => !deckIds.has(c.id))
+      .sort(() => 0.5 - Math.random());
+    
+    const shortfall = sessionSize - sessionDeck.length;
+    sessionDeck.push(...remainingCards.slice(0, shortfall));
+  }
+  
+  // Final shuffle to mix cards from different priority groups.
+  return sessionDeck.sort(() => 0.5 - Math.random()).slice(0, sessionSize);
 };
 
 
-export const updateCard = (card: Card, rating: ReviewRating): Card => {
-  const updatedCard = { ...card };
-  let correct = rating !== ReviewRating.Again;
-
-  if (correct) {
-    if (updatedCard.repetitions === 0) { // New card -> learning step
-      switch (rating) {
-        case ReviewRating.Hard:
-          updatedCard.interval = HARD_INTERVAL;
-          break;
-        case ReviewRating.Good:
-          updatedCard.interval = GOOD_INTERVAL; // 10 mins
-          break;
-        case ReviewRating.Easy:
-          // If Easy is selected on a new card, it skips learning and graduates immediately.
-          updatedCard.interval = EASY_GRADUATING_INTERVAL;
-          updatedCard.easeFactor += 0.15;
-          break;
-      }
-    } else { // Reviewing a card that has been correct at least once.
-      // If this is the first review after the initial learning step, graduate it.
-      if (updatedCard.interval <= GOOD_INTERVAL) {
-        switch (rating) {
-          case ReviewRating.Good:
-            updatedCard.interval = GRADUATING_INTERVAL;
-            break;
-          case ReviewRating.Easy:
-            updatedCard.interval = EASY_GRADUATING_INTERVAL;
-            updatedCard.easeFactor += 0.15;
-            break;
-          case ReviewRating.Hard:
-             // Rated Hard on first review, so it doesn't graduate yet.
-             // Repeat with a slightly longer interval.
-            updatedCard.interval *= 1.2;
-            break;
-        }
-      } else { // It's a mature review card.
-        let newInterval;
-        if (rating === ReviewRating.Hard) {
-          newInterval = updatedCard.interval * 1.2;
-          updatedCard.easeFactor = Math.max(MIN_EASE_FACTOR, updatedCard.easeFactor - 0.15);
-        } else if (rating === ReviewRating.Good) {
-          newInterval = updatedCard.interval * updatedCard.easeFactor;
-        } else { // Easy
-          newInterval = updatedCard.interval * updatedCard.easeFactor * 1.5;
-          updatedCard.easeFactor += 0.15;
-        }
-        updatedCard.interval = newInterval;
-      }
-    }
-    updatedCard.repetitions += 1;
-    updatedCard.isNew = false;
-  } else { // Incorrect answer
-    updatedCard.repetitions = 0; // Reset repetition count on failure
-    updatedCard.interval = AGAIN_INTERVAL;
-    updatedCard.easeFactor = Math.max(MIN_EASE_FACTOR, updatedCard.easeFactor - 0.20);
-    // A card is no longer "new" once it has been seen, even if answered incorrectly.
-    updatedCard.isNew = false;
-  }
-
-  // If a card is failed, it should be due immediately for the next session.
-  // For correct answers, schedule it based on its new interval.
-  if (rating === ReviewRating.Again) {
-    updatedCard.dueDate = Date.now();
-  } else {
-    const minutes_to_ms = updatedCard.interval * 60 * 1000;
-    updatedCard.dueDate = Date.now() + minutes_to_ms;
-  }
-  
-  return updatedCard;
+/**
+ * Updates a card's priority.
+ * @param card The card to update.
+ * @param priority The new priority to set.
+ * @returns The updated card.
+ */
+export const updateCard = (card: Card, priority: Priority): Card => {
+  return { ...card, priority };
 };
