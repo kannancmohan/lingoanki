@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { pawrsServiceTests } from './unit/pawrsService.test';
+import { pawrsServiceTests } from './unit/srsService.test';
 import { quizFlowTests } from './integration/quizFlow.test';
 
 const allTestCases = [...quizFlowTests, ...pawrsServiceTests];

@@ -1,8 +1,6 @@
 import { selectSessionCards } from '../../services/srsService';
 import { Card, Priority, Quiz } from '../../types';
 import { expect, TestCase } from '../test-utils';
-// FIX: Import DEFAULT_EASE_FACTOR to initialize new card properties.
-import { DEFAULT_EASE_FACTOR } from '../../constants';
 
 const createTestCard = (id: number, priority: Priority): Card => ({
     id: `card_${id}`,
@@ -13,10 +11,6 @@ const createTestCard = (id: number, priority: Priority): Card => ({
     timesSeen: 0,
     timesCorrect: 0,
     timesIncorrect: 0,
-    // FIX: Add missing properties to align with the Card type.
-    repetitions: 0,
-    interval: 0,
-    easeFactor: DEFAULT_EASE_FACTOR,
 });
 
 const createTestQuiz = (cardCounts: Record<Priority, number>): Quiz => {

@@ -1,6 +1,4 @@
 import { Quiz, Card, ImportWarning, Priority } from '../types';
-// FIX: Import default ease factor for card initialization
-import { DEFAULT_EASE_FACTOR } from '../constants';
 
 const QUIZZES_KEY = 'lingoAnkiQuizzes';
 
@@ -92,10 +90,6 @@ export const createQuiz = (name: string, csvData: string): CreateQuizResult => {
             timesSeen: 0,
             timesCorrect: 0,
             timesIncorrect: 0,
-            // FIX: Initialize new SRS properties for the card
-            repetitions: 0,
-            interval: 0,
-            easeFactor: DEFAULT_EASE_FACTOR,
         });
     });
     
@@ -162,10 +156,6 @@ export const resetPriorities = (quizId: string): void => {
         timesSeen: 0,
         timesCorrect: 0,
         timesIncorrect: 0,
-        // FIX: Also reset new SRS properties
-        repetitions: 0,
-        interval: 0,
-        easeFactor: DEFAULT_EASE_FACTOR,
     }));
 
     const updatedQuiz = { ...quiz, cards: resetCards };
@@ -182,9 +172,5 @@ export const createNewCard = (quizId: string): Card => {
         timesSeen: 0,
         timesCorrect: 0,
         timesIncorrect: 0,
-        // FIX: Initialize new SRS properties for the card
-        repetitions: 0,
-        interval: 0,
-        easeFactor: DEFAULT_EASE_FACTOR,
     };
 };

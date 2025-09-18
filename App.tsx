@@ -10,8 +10,6 @@ import { BrainIcon, QuestionMarkCircleIcon } from './components/icons';
 import { EditQuizPage } from './components/EditQuizPage';
 import { ImportWarningModal } from './components/ImportWarningModal';
 import { CardStatsPage } from './components/CardStatsPage';
-// FIX: Import default ease factor for optimistic state update
-import { DEFAULT_EASE_FACTOR } from './constants';
 
 type View = 'list' | 'session' | 'create' | 'help' | 'edit' | 'stats';
 type ReviewMode = 'immediate' | 'strict';
@@ -75,10 +73,6 @@ const App: React.FC = () => {
                   timesSeen: 0,
                   timesCorrect: 0,
                   timesIncorrect: 0,
-                  // FIX: Also reset new SRS properties for optimistic UI update
-                  repetitions: 0,
-                  interval: 0,
-                  easeFactor: DEFAULT_EASE_FACTOR,
                 })),
               };
             }
