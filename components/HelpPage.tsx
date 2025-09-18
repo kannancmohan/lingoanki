@@ -1,5 +1,5 @@
 import React from 'react';
-import { AGAIN_INTERVAL, GOOD_INTERVAL, GRADUATING_INTERVAL, EASY_GRADUATING_INTERVAL } from '../constants';
+import { AGAIN_INTERVAL, GOOD_INTERVAL, GRADUATING_INTERVAL, EASY_GRADUATING_INTERVAL, HARD_INTERVAL } from '../constants';
 
 interface HelpPageProps {
   onBack: () => void;
@@ -56,7 +56,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onBack }) => {
             </div>
             <div className="bg-slate-700/50 p-4 rounded-lg">
               <h3 className="font-bold text-orange-400">Hard (Shortcut: 2)</h3>
-              <p className="text-sm">Use this if you struggled to recall the answer but eventually got it right. The time until the next review will be slightly longer than the last time, but shorter than 'Good'.</p>
+              <p className="text-sm">Use this if you struggled to recall the answer but eventually got it right. For a new card, this means a short learning review in about <span className="font-bold">{HARD_INTERVAL} minutes</span>. For a learned card, the time until the next review increases by a small amount.</p>
             </div>
             <div className="bg-slate-700/50 p-4 rounded-lg">
               <h3 className="font-bold text-sky-400">Good (Shortcut: 3)</h3>

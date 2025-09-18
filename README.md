@@ -9,7 +9,7 @@ A simple Anki-like application to help you learn German words through interactiv
 ## ✨ Features
 
 - **CSV Import**: Easily create new quizzes by uploading a `.csv` file of words and translations.
-- **Spaced Repetition System (SRS)**: An intelligent algorithm schedules reviews to maximize learning efficiency.
+- **Spaced Repetition System (SRS)**: An intelligent algorithm schedules reviews to maximize learning efficiency. The next review interval is shown on each rating button.
 - **Interactive Quizzes**: Engage with your vocabulary through a clean and focused quiz interface.
 - **Progress Tracking**: Monitor your mastery for each quiz. Mastery is a score that grows as you learn new cards and strengthen your memory of existing ones through repeated, correct reviews. This score can go beyond 100% to reflect deep learning.
 - **Keyboard Shortcuts**: Learn faster with keyboard controls for rating cards (1-4).
@@ -114,7 +114,16 @@ If you prefer not to use Nix, you can install the dependencies on your system di
 2.  **Start Learning**:
     - Click on your new quiz from the list to start a session.
     - Type the translation and press Enter.
-    - After the answer is revealed, rate your recall using the buttons or number keys (1-4) to schedule the next review.
+    - After the answer is revealed, rate your recall using the buttons or number keys (1-4). The app will show you an estimate of when you'll see the card next based on your choice.
+
+### Understanding the Ratings
+
+Here’s a quick guide on what the ratings mean for the next review time:
+
+*   **Again (1)**: You didn't know the answer. The card will be shown again soon in the current session (if enabled) and will be due for your very next session. Its learning progress is reset.
+*   **Hard (2)**: You struggled to remember. The time until the next review will increase by a small amount compared to the previous interval.
+*   **Good (3)**: The default for a correct answer. The time until the next review increases significantly (e.g., from 1 day to 2.5 days). New cards are shown again in about 10 minutes.
+*   **Easy (4)**: You knew it instantly. The time until the next review increases even more. New cards graduate immediately and will be shown again in 4 days.
 
 ## 🧪 Running Tests
 

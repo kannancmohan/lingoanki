@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { srsServiceTests } from './unit/srsService.test';
 import { quizFlowTests } from './integration/quizFlow.test';
+import { srsPreviewTests } from './unit/srsPreview.test';
 
-const allTestCases = [...quizFlowTests, ...srsServiceTests];
+const allTestCases = [...quizFlowTests, ...srsServiceTests, ...srsPreviewTests];
 
 type TestResult = 'idle' | 'running' | 'passed' | 'failed';
 

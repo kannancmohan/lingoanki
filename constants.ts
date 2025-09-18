@@ -1,5 +1,6 @@
 export const INITIAL_EASE_FACTOR = 2.5;
 export const AGAIN_INTERVAL = 1; // 1 minute
+export const HARD_INTERVAL = 6; // 6 minutes for a new card rated 'Hard'
 export const GOOD_INTERVAL = 10; // 10 minutes for a new card rated 'Good'
 
 // The first interval for a card that has "graduated" from the learning phase.

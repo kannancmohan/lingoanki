@@ -136,12 +136,12 @@ export const calculateQuizMastery = (quiz: Quiz): number => {
     }
     
     const totalPoints = quiz.cards.reduce((acc, card) => {
-        if (card.isNew) {
-            return acc;
+        if (card.repetitions > 0) {
+            const basePoint = 1;
+            const bonusPoints = Math.max(0, card.repetitions - 1) * 0.2;
+            return acc + basePoint + bonusPoints;
         }
-        const basePoint = 1;
-        const bonusPoints = Math.max(0, card.repetitions - 1) * 0.2;
-        return acc + basePoint + bonusPoints;
+        return acc;
     }, 0);
 
     const mastery = (totalPoints / quiz.cards.length) * 100;

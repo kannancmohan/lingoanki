@@ -1,5 +1,5 @@
 import { Card, Quiz, ReviewRating } from '../types';
-import { AGAIN_INTERVAL, GOOD_INTERVAL, MIN_EASE_FACTOR, GRADUATING_INTERVAL, EASY_GRADUATING_INTERVAL } from '../constants';
+import { AGAIN_INTERVAL, GOOD_INTERVAL, MIN_EASE_FACTOR, GRADUATING_INTERVAL, EASY_GRADUATING_INTERVAL, HARD_INTERVAL } from '../constants';
 
 export const selectSessionCards = (quiz: Quiz, sessionSize: number, order: 'random' | 'sequential'): Card[] => {
   const now = Date.now();
@@ -37,8 +37,10 @@ export const updateCard = (card: Card, rating: ReviewRating): Card => {
   if (correct) {
     if (updatedCard.repetitions === 0) { // New card -> learning step
       switch (rating) {
-        case ReviewRating.Good:
         case ReviewRating.Hard:
+          updatedCard.interval = HARD_INTERVAL;
+          break;
+        case ReviewRating.Good:
           updatedCard.interval = GOOD_INTERVAL; // 10 mins
           break;
         case ReviewRating.Easy:
@@ -84,10 +86,18 @@ export const updateCard = (card: Card, rating: ReviewRating): Card => {
     updatedCard.repetitions = 0; // Reset repetition count on failure
     updatedCard.interval = AGAIN_INTERVAL;
     updatedCard.easeFactor = Math.max(MIN_EASE_FACTOR, updatedCard.easeFactor - 0.20);
+    // A card is no longer "new" once it has been seen, even if answered incorrectly.
+    updatedCard.isNew = false;
   }
 
-  const minutes_to_ms = updatedCard.interval * 60 * 1000;
-  updatedCard.dueDate = Date.now() + minutes_to_ms;
+  // If a card is failed, it should be due immediately for the next session.
+  // For correct answers, schedule it based on its new interval.
+  if (rating === ReviewRating.Again) {
+    updatedCard.dueDate = Date.now();
+  } else {
+    const minutes_to_ms = updatedCard.interval * 60 * 1000;
+    updatedCard.dueDate = Date.now() + minutes_to_ms;
+  }
   
   return updatedCard;
 };

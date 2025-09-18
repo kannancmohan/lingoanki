@@ -3,6 +3,7 @@ import { Quiz, Card, ReviewRating, SessionStats, QuizDirection } from '../types'
 import { selectSessionCards, updateCard } from '../services/srsService';
 import { updateQuiz as saveQuiz, calculateQuizMastery } from '../services/quizService';
 import { QuizSummary } from './QuizSummary';
+import { previewCardInterval, formatInterval } from '../services/srsPreview';
 
 type ReviewMode = 'immediate' | 'strict';
 
@@ -15,12 +16,20 @@ interface QuizSessionProps {
   reviewMode: ReviewMode;
 }
 
-const RatingButton: React.FC<{onClick: () => void, color: string, label: string, shortcut: string}> = ({onClick, color, label, shortcut}) => (
+const RatingButton: React.FC<{
+  onClick: () => void, 
+  color: string, 
+  label: string, 
+  shortcut: string,
+  interval?: string
+}> = ({onClick, color, label, shortcut, interval}) => (
     <button
         onClick={onClick}
-        className={`flex-1 py-3 px-2 rounded-lg text-white font-semibold transition-all duration-200 transform hover:scale-105 ${color}`}
+        className={`flex-1 py-2 px-2 rounded-lg text-white font-semibold transition-all duration-200 transform hover:scale-105 flex flex-col justify-center items-center ${color}`}
+        style={{minHeight: '80px'}}
     >
-        {label} <span className="text-xs opacity-75">({shortcut})</span>
+        <span className="text-sm font-normal text-slate-300 mb-1 h-5">{interval || ''}</span>
+        <span>{label} <span className="text-xs opacity-75">({shortcut})</span></span>
     </button>
 );
 
@@ -28,11 +37,11 @@ const RatingButton: React.FC<{onClick: () => void, color: string, label: string,
 export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onSessionEnd, order, quizDirection, reviewMode }) => {
   const [currentQuiz, setCurrentQuiz] = useState<Quiz>(quiz);
   
-  // New Queue-based state management
   const [sessionQueue, setSessionQueue] = useState<Card[]>([]);
   const [reviewQueue, setReviewQueue] = useState<Card[]>([]);
   const [currentCard, setCurrentCard] = useState<Card | null>(null);
   const [initialDeckSize, setInitialDeckSize] = useState(0);
+  const [correctlyAnsweredCardIds, setCorrectlyAnsweredCardIds] = useState(new Set<string>());
 
   const [userInput, setUserInput] = useState('');
   const [isAnswered, setIsAnswered] = useState(false);
@@ -43,6 +52,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [answerLanguage, setAnswerLanguage] = useState('German');
+  const [nextIntervals, setNextIntervals] = useState<Record<string, string> | null>(null);
 
   useEffect(() => {
     const cards = selectSessionCards(quiz, sessionSize, order);
@@ -83,76 +93,90 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
     
     setIsCorrect(correct);
     setIsAnswered(true);
-
-    if (correct) {
-      setSessionStats(prev => ({
-        ...prev,
-        correct: prev.correct + 1,
-        total: prev.total + 1,
-      }));
-    } else {
-      setReviewQueue(prev => [...prev, currentCard]);
-      setSessionStats(prev => ({
-        ...prev,
-        incorrect: prev.incorrect + 1,
-        total: prev.total + 1,
-      }));
-    }
   }, [userInput, currentCard, currentAnswer]);
 
-  const moveToNextCard = useCallback(() => {
-    setIsAnswered(false);
-    setUserInput('');
-
-    const nextQueue = sessionQueue.slice(1);
-    setSessionQueue(nextQueue);
-
-    if (nextQueue.length > 0) {
-      setCurrentCard(nextQueue[0]);
+  useEffect(() => {
+    if (isAnswered && currentCard) {
+        setNextIntervals({
+            again: formatInterval(previewCardInterval(currentCard, ReviewRating.Again)),
+            hard: formatInterval(previewCardInterval(currentCard, ReviewRating.Hard)),
+            good: formatInterval(previewCardInterval(currentCard, ReviewRating.Good)),
+            easy: formatInterval(previewCardInterval(currentCard, ReviewRating.Easy)),
+        });
     } else {
-      // Current round is finished, check for review round
-      if (reviewMode === 'immediate' && reviewQueue.length > 0) {
-        const shuffledReview = reviewQueue.sort(() => 0.5 - Math.random());
-        setSessionQueue(shuffledReview);
-        setCurrentCard(shuffledReview[0]);
-        setReviewQueue([]);
-      } else {
-        // Session is over (strict mode, or immediate mode with no errors)
-        setIsFinished(true);
-        setCurrentCard(null);
-      }
+        setNextIntervals(null);
     }
-  }, [sessionQueue, reviewQueue, reviewMode]);
+  }, [isAnswered, currentCard]);
 
-
-  const handleRateCard = (rating: ReviewRating) => {
+  const handleRateCard = useCallback((rating: ReviewRating) => {
     if (!currentCard) return;
+
+    // --- Part 1: Determine correctness and update stats ---
+    const wasAnswerCorrect = isCorrect;
+    const effectiveRating = wasAnswerCorrect ? rating : ReviewRating.Again;
+
+    // Update progress tracking for unique correct cards. This drives the progress bar.
+    if (wasAnswerCorrect && !correctlyAnsweredCardIds.has(currentCard.id)) {
+        setCorrectlyAnsweredCardIds(prev => new Set(prev).add(currentCard.id));
+    }
+
+    // Update session summary stats (counts every attempt for the summary screen).
+    setSessionStats(prev => ({
+        ...prev,
+        correct: prev.correct + (wasAnswerCorrect ? 1 : 0),
+        incorrect: prev.incorrect + (wasAnswerCorrect ? 0 : 1),
+        total: prev.total + 1,
+    }));
     
-    const wasCorrect = rating !== ReviewRating.Again;
-    
-    // Update SRS properties
-    const updatedSrsCard = updateCard(currentCard, rating);
-    
-    // Combine with statistics update
-    const finalUpdatedCard = {
+    // --- Part 2: Update card SRS data and persist ---
+    const updatedSrsCard = updateCard(currentCard, effectiveRating);
+    const finalUpdatedCard: Card = {
         ...updatedSrsCard,
         timesSeen: (currentCard.timesSeen || 0) + 1,
-        timesCorrect: (currentCard.timesCorrect || 0) + (wasCorrect ? 1 : 0),
-        timesIncorrect: (currentCard.timesIncorrect || 0) + (wasCorrect ? 0 : 1),
+        timesCorrect: (currentCard.timesCorrect || 0) + (wasAnswerCorrect ? 1 : 0),
+        timesIncorrect: (currentCard.timesIncorrect || 0) + (wasAnswerCorrect ? 0 : 1),
     };
 
     setCurrentQuiz(prevQuiz => {
-        const newCards = prevQuiz.cards.map(c => 
+        const newCards = prevQuiz.cards.map(c =>
             c.id === finalUpdatedCard.id ? finalUpdatedCard : c
         );
         const updatedQuiz = { ...prevQuiz, cards: newCards };
-        // Persist the changes to localStorage
         saveQuiz(updatedQuiz);
         return updatedQuiz;
     });
 
-    moveToNextCard();
-  };
+    // --- Part 3: Calculate next state and move to next card ---
+    const remainingSessionQueue = sessionQueue.slice(1);
+    
+    let updatedReviewQueue = reviewQueue;
+    // If the typed answer was wrong, it must be reviewed.
+    if (!wasAnswerCorrect && reviewMode === 'immediate') {
+        updatedReviewQueue = [...reviewQueue, finalUpdatedCard];
+    }
+    
+    // Decide what comes next
+    if (remainingSessionQueue.length > 0) {
+        setCurrentCard(remainingSessionQueue[0]);
+        setSessionQueue(remainingSessionQueue);
+        setReviewQueue(updatedReviewQueue);
+    } else if (updatedReviewQueue.length > 0) {
+        const shuffledReview = [...updatedReviewQueue].sort(() => 0.5 - Math.random());
+        setCurrentCard(shuffledReview[0]);
+        setSessionQueue(shuffledReview);
+        setReviewQueue([]);
+    } else {
+        setIsFinished(true);
+        setCurrentCard(null);
+    }
+
+    // --- Part 4: Reset UI for next card ---
+    setIsAnswered(false);
+    setUserInput('');
+    setIsCorrect(false);
+
+  }, [currentCard, isCorrect, sessionQueue, reviewQueue, reviewMode, correctlyAnsweredCardIds]);
+
 
   const handleRestartSession = () => {
     // Use the most up-to-date quiz data which is in `currentQuiz` state
@@ -163,6 +187,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
     setCurrentCard(cards[0] || null);
     setInitialDeckSize(cards.length);
     setReviewQueue([]);
+    setCorrectlyAnsweredCardIds(new Set());
     setUserInput('');
     setIsAnswered(false);
     setIsCorrect(false);
@@ -208,8 +233,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
     );
   }
   
-  const totalQuestionsInSession = initialDeckSize + (reviewMode === 'immediate' ? sessionStats.incorrect : 0);
-  const progress = totalQuestionsInSession > 0 ? (sessionStats.total / totalQuestionsInSession) * 100 : 0;
+  const progress = initialDeckSize > 0 ? (correctlyAnsweredCardIds.size / initialDeckSize) * 100 : 0;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 text-white font-sans">
@@ -222,7 +246,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
               </div>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-2.5 mt-2">
-                <div className="bg-sky-500 h-2.5 rounded-full" style={{ width: `${progress}%` }}></div>
+                <div className="bg-sky-500 h-2.5 rounded-full" style={{ width: `${progress > 100 ? 100 : progress}%` }}></div>
             </div>
         </div>
         <div className={`bg-slate-800 rounded-2xl shadow-2xl p-8 transition-all duration-300 border ${!isAnswered ? 'border-slate-700' : isCorrect ? 'border-green-500' : 'border-red-500'}`}>
@@ -252,16 +276,16 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
               </div>
 
               <div className="flex gap-2 sm:gap-4 text-sm sm:text-base">
-                <RatingButton onClick={() => handleRateCard(ReviewRating.Again)} color="bg-red-600 hover:bg-red-500" label="Again" shortcut="1" />
-                <RatingButton onClick={() => handleRateCard(ReviewRating.Hard)} color="bg-orange-500 hover:bg-orange-400" label="Hard" shortcut="2" />
-                <RatingButton onClick={() => handleRateCard(ReviewRating.Good)} color="bg-sky-600 hover:bg-sky-500" label="Good" shortcut="3" />
-                <RatingButton onClick={() => handleRateCard(ReviewRating.Easy)} color="bg-green-600 hover:bg-green-500" label="Easy" shortcut="4" />
+                <RatingButton onClick={() => handleRateCard(ReviewRating.Again)} color="bg-red-600 hover:bg-red-500" label="Again" shortcut="1" interval={nextIntervals?.again} />
+                <RatingButton onClick={() => handleRateCard(ReviewRating.Hard)} color="bg-orange-500 hover:bg-orange-400" label="Hard" shortcut="2" interval={nextIntervals?.hard} />
+                <RatingButton onClick={() => handleRateCard(ReviewRating.Good)} color="bg-sky-600 hover:bg-sky-500" label="Good" shortcut="3" interval={nextIntervals?.good} />
+                <RatingButton onClick={() => handleRateCard(ReviewRating.Easy)} color="bg-green-600 hover:bg-green-500" label="Easy" shortcut="4" interval={nextIntervals?.easy} />
               </div>
             </div>
           )}
         </div>
         <div className="text-center text-slate-500 text-sm mt-4">
-            <p>Cards left: {sessionQueue.length} {reviewQueue.length > 0 && `(+${reviewQueue.length} for review)`}</p>
+            <p>Cards left in round: {sessionQueue.length -1} {reviewQueue.length > 0 && `(+${reviewQueue.length} for review)`}</p>
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { createQuiz, getQuizzes, calculateQuizMastery, updateQuiz, createNewCard } from '../../services/quizService';
-import { updateCard } from '../../services/srsService';
+import { updateCard, selectSessionCards } from '../../services/srsService';
 import { ReviewRating, Quiz, Card, ImportWarning } from '../../types';
 import { INITIAL_EASE_FACTOR, AGAIN_INTERVAL, GOOD_INTERVAL, EASY_GRADUATING_INTERVAL, GRADUATING_INTERVAL } from '../../constants';
 import { expect, TestCase } from '../test-utils';
@@ -93,7 +93,7 @@ export const quizFlowTests: TestCase[] = [
             expect(card2.repetitions).toBe(0);
             expect(card2.interval).toBe(AGAIN_INTERVAL);
             expect(card2.easeFactor).toBe(INITIAL_EASE_FACTOR - 0.20);
-            expect(card2.isNew).toBe(true); // Still new because never answered correctly
+            expect(card2.isNew).toBe(false); // No longer new after first review
 
             // Second review: Pass with 'Good'
             card2 = updateCard(card2, ReviewRating.Good);
@@ -149,6 +149,77 @@ export const quizFlowTests: TestCase[] = [
             const savedCard3 = savedQuiz.cards.find(c => c.id === card3.id)!;
             expect(savedCard3.interval).toBe(easyReviewedCard.interval);
             expect(savedCard3.easeFactor).toBe(easyReviewedCard.easeFactor);
+        }
+    },
+    {
+        name: 'Integration Test: Cards rated "Again" are immediately due for the next session',
+        testFn: async () => {
+            // 1. Create a quiz with one card
+            const { newQuiz } = createQuiz("Immediate Due Test", "test,Test");
+            let quiz = getQuizzes().find(q => q.id === newQuiz.id)!;
+            let card = quiz.cards[0];
+
+            // 2. Rate the card as 'Again'
+            const failedCard = updateCard(card, ReviewRating.Again);
+            
+            // 3. Update the quiz state
+            quiz.cards[0] = failedCard;
+            updateQuiz(quiz);
+            
+            // 4. Reload the quiz and select session cards
+            const updatedQuiz = getQuizzes().find(q => q.id === newQuiz.id)!;
+            const sessionCards = selectSessionCards(updatedQuiz, 10, 'sequential');
+            
+            // 5. Verify the failed card is in the session deck because it's due
+            expect(sessionCards).toHaveLength(1);
+            expect(sessionCards[0].id).toBe(failedCard.id);
+        }
+    },
+    {
+        name: 'Integration Test: Simulates a session with mixed ratings and checks the next session deck',
+        testFn: async () => {
+            // 1. Create a quiz with 8 items.
+            let csv = '';
+            for (let i = 1; i <= 8; i++) {
+                csv += `card${i},val${i}\n`;
+            }
+            const { newQuiz } = createQuiz("Mixed Session Test", csv);
+            let quiz = getQuizzes().find(q => q.id === newQuiz.id)!;
+            const initialCards = [...quiz.cards];
+            expect(initialCards.length).toBe(8);
+
+            // 2. Simulate Session 1, applying a different rating to each pair of cards.
+            const ratings = [
+                ReviewRating.Again, ReviewRating.Again,    // Due immediately
+                ReviewRating.Hard, ReviewRating.Hard,      // Due in 6 mins
+                ReviewRating.Good, ReviewRating.Good,      // Due in 10 mins
+                ReviewRating.Easy, ReviewRating.Easy,      // Due in 4 days
+            ];
+
+            const updatedCards = initialCards.map((card, index) => {
+                return updateCard(card, ratings[index]);
+            });
+
+            quiz.cards = updatedCards;
+            updateQuiz(quiz);
+
+            // 3. Start Session 2 and check the deck.
+            const reloadedQuiz = getQuizzes().find(q => q.id === newQuiz.id)!;
+            const nextSessionDeck = selectSessionCards(reloadedQuiz, 10, 'sequential');
+
+            // 4. Assertions: Only the two cards marked 'Again' should be due.
+            expect(nextSessionDeck.length).toBe(2);
+
+            const card1Id = initialCards[0].id;
+            const card2Id = initialCards[1].id;
+            const idsInNextDeck = nextSessionDeck.map(c => c.id);
+
+            const card1InDeck = idsInNextDeck.includes(card1Id);
+            const card2InDeck = idsInNextDeck.includes(card2Id);
+
+            if (!card1InDeck || !card2InDeck) {
+                throw new Error(`Expected cards marked 'Again' (IDs: ${card1Id}, ${card2Id}) to be in the next session, but received deck with IDs: [${idsInNextDeck.join(', ')}]`);
+            }
         }
     },
     {
