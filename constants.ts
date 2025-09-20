@@ -4,10 +4,3 @@ export const PRIORITY_WEIGHTS = {
   [ 'Low' as const]: 0.05,
   [ 'Unset' as const]: 0.35,
 };
-
-// FIX: Add constants for srsPreview.ts
-export const AGAIN_INTERVAL = 1; // 1 minute
-export const HARD_INTERVAL = 5; // 5 minutes
-export const GOOD_INTERVAL = 10; // 10 minutes
-export const GRADUATING_INTERVAL = 1 * 24 * 60; // 1 day
-export const EASY_GRADUATING_INTERVAL = 4 * 24 * 60; // 4 days

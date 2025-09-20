@@ -5,14 +5,6 @@ export enum Priority {
   Unset = 'Unset',
 }
 
-// FIX: Add ReviewRating enum for srsPreview.ts
-export enum ReviewRating {
-  Again,
-  Hard,
-  Good,
-  Easy,
-}
-
 export interface Card {
   id: string;
   quizId: string;
@@ -22,10 +14,6 @@ export interface Card {
   timesSeen: number;
   timesCorrect: number;
   timesIncorrect: number;
-  // FIX: Add optional properties for srsPreview.ts to avoid breaking existing logic.
-  repetitions?: number;
-  easeFactor?: number;
-  interval?: number;
 }
 
 export interface Quiz {

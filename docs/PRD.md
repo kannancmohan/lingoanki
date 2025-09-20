@@ -82,9 +82,9 @@ The core logic that determines which cards are selected for a session.
 
 - **Weighted Selection:** The algorithm assembles a session deck by drawing cards from four priority groups based on the following weights:
     - **High:** 40%
-    - **Medium:** 30%
-    - **Low:** 20%
-    - **Unset:** 10%
+    - **Medium:** 20%
+    - **Low:** 5%
+    - **Unset:** 35%
 - **Dynamic Weight Redistribution:** If a priority group is empty or has fewer cards than its target allotment, its weight is automatically redistributed among the remaining groups. This ensures the session is always full and intelligently adapts to the state of the deck.
 - **Randomization:** Selection within each group is random to prevent seeing the same cards in the same order. The final deck is also shuffled.
 
