@@ -1,4 +1,4 @@
-import { selectSessionCards } from '../../services/srsService';
+import { selectSessionCards } from '../../services/sessionService';
 import { Card, Priority, Quiz } from '../../types';
 import { expect, TestCase } from '../test-utils';
 
@@ -44,8 +44,8 @@ export const pawrsServiceTests: TestCase[] = [
     {
         name: 'PAWRS Test: Approximates correct distribution with ample cards',
         testFn: () => {
-            // Weights: High: 0.4, Medium: 0.3, Low: 0.2, Unset: 0.1
-            // Session Size: 100 -> High: 40, Medium: 30, Low: 20, Unset: 10
+            // Weights: High: 0.4, Medium: 0.2, Low: 0.05, Unset: 0.35
+            // Session Size: 100 -> High: 40, Medium: 20, Low: 5, Unset: 35
             const quiz = createTestQuiz({ High: 50, Medium: 50, Low: 50, Unset: 50 });
             const session = selectSessionCards(quiz, 100);
             
@@ -55,18 +55,18 @@ export const pawrsServiceTests: TestCase[] = [
             // Allow for rounding differences
             const tolerance = 2;
             if (Math.abs(counts.High - 40) > tolerance) throw new Error(`Expected ~40 High cards, got ${counts.High}`);
-            if (Math.abs(counts.Medium - 30) > tolerance) throw new Error(`Expected ~30 Medium cards, got ${counts.Medium}`);
-            if (Math.abs(counts.Low - 20) > tolerance) throw new Error(`Expected ~20 Low cards, got ${counts.Low}`);
-            if (Math.abs(counts.Unset - 10) > tolerance) throw new Error(`Expected ~10 Unset cards, got ${counts.Unset}`);
+            if (Math.abs(counts.Medium - 20) > tolerance) throw new Error(`Expected ~20 Medium cards, got ${counts.Medium}`);
+            if (Math.abs(counts.Low - 5) > tolerance) throw new Error(`Expected ~5 Low cards, got ${counts.Low}`);
+            if (Math.abs(counts.Unset - 35) > tolerance) throw new Error(`Expected ~35 Unset cards, got ${counts.Unset}`);
         },
     },
     {
         name: 'PAWRS Test: Redistributes weight when a priority group is empty',
         testFn: () => {
             // High is empty, its 40% weight should be redistributed.
-            // Remaining weights: Med: 0.3, Low: 0.2, Unset: 0.1 (Total: 0.6)
-            // Proportions: Med: 0.3/0.6=50%, Low: 0.2/0.6=33.3%, Unset: 0.1/0.6=16.7%
-            // Session of 30 -> Med: 15, Low: 10, Unset: 5
+            // Remaining weights: Med: 0.2, Low: 0.05, Unset: 0.35 (Total: 0.6)
+            // Proportions: Med: 0.2/0.6=33.3%, Low: 0.05/0.6=8.3%, Unset: 0.35/0.6=58.3%
+            // Session of 30 -> Med: 10, Low: 2.5(3), Unset: 17.5(17)
             const quiz = createTestQuiz({ High: 0, Medium: 20, Low: 20, Unset: 20 });
             const session = selectSessionCards(quiz, 30);
             const counts = { High: 0, Medium: 0, Low: 0, Unset: 0 };
@@ -74,16 +74,16 @@ export const pawrsServiceTests: TestCase[] = [
 
             expect(counts.High).toBe(0);
             const tolerance = 2;
-            if (Math.abs(counts.Medium - 15) > tolerance) throw new Error(`Expected ~15 Medium cards, got ${counts.Medium}`);
-            if (Math.abs(counts.Low - 10) > tolerance) throw new Error(`Expected ~10 Low cards, got ${counts.Low}`);
-            if (Math.abs(counts.Unset - 5) > tolerance) throw new Error(`Expected ~5 Unset cards, got ${counts.Unset}`);
+            if (Math.abs(counts.Medium - 10) > tolerance) throw new Error(`Expected ~10 Medium cards, got ${counts.Medium}`);
+            if (Math.abs(counts.Low - 3) > tolerance) throw new Error(`Expected ~3 Low cards, got ${counts.Low}`);
+            if (Math.abs(counts.Unset - 17) > tolerance) throw new Error(`Expected ~17 Unset cards, got ${counts.Unset}`);
             expect(session.length).toBe(30);
         },
     },
     {
         name: 'PAWRS Test: Handles insufficient cards in a high-priority group',
         testFn: () => {
-            // Target for session of 20: High: 8, Med: 6, Low: 4, Unset: 2
+            // Target for session of 20: High: 8, Med: 4, Low: 1, Unset: 7
             // We only have 3 High cards. The shortfall of 5 should be filled by other groups.
             const quiz = createTestQuiz({ High: 3, Medium: 20, Low: 20, Unset: 20 });
             const session = selectSessionCards(quiz, 20);
@@ -97,7 +97,7 @@ export const pawrsServiceTests: TestCase[] = [
     {
         name: 'PAWRS Test: Fills session completely even with multiple empty/small groups',
         testFn: () => {
-            // Only Low and Unset cards are available.
+            // Only Low (0.05 weight) and Unset (0.35 weight) cards are available. Unset should be heavily favored.
             const quiz = createTestQuiz({ High: 0, Medium: 0, Low: 5, Unset: 5 });
             const session = selectSessionCards(quiz, 8);
 
@@ -107,8 +107,10 @@ export const pawrsServiceTests: TestCase[] = [
             expect(session.length).toBe(8);
             expect(counts.High).toBe(0);
             expect(counts.Medium).toBe(0);
-            expect(counts.Low).toBe(5); // Takes all 5 Low cards
-            expect(counts.Unset).toBe(3); // Fills the rest with Unset
+            
+            // The algorithm should take all 5 available Unset cards (as its weight is higher) and fill the rest with Low cards.
+            expect(counts.Unset).toBe(5);
+            expect(counts.Low).toBe(3);
         }
     },
 ];

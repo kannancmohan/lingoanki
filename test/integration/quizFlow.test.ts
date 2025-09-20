@@ -1,5 +1,5 @@
 import { createQuiz, getQuizzes, calculateQuizMastery, updateQuiz, resetPriorities } from '../../services/quizService';
-import { updateCard, selectSessionCards } from '../../services/srsService';
+import { updateCard, selectSessionCards } from '../../services/sessionService';
 import { Priority, Quiz } from '../../types';
 import { expect, TestCase } from '../test-utils';
 

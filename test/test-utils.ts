@@ -5,6 +5,9 @@ export function expect<T>(actual: T) {
       // Use a small tolerance for floating point comparisons
       if (typeof actual === 'number' && typeof expected === 'number') {
         if (Math.abs(actual - expected) > 1e-9) {
+          if (Number.isInteger(actual) && Number.isInteger(expected)) {
+            throw new Error(`Expected ${actual} to be ${expected}`);
+          }
           throw new Error(`Expected ${actual} to be close to ${expected}`);
         }
       } else if (actual !== expected) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Quiz, Card, Priority, SessionStats } from '../types';
-import { selectSessionCards, updateCard } from '../services/srsService';
+import { selectSessionCards, updateCard } from '../services/sessionService';
 import { updateQuiz as saveQuiz, calculateQuizMastery } from '../services/quizService';
 import { QuizSummary } from './QuizSummary';
 
