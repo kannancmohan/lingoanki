@@ -33,6 +33,7 @@ export interface Quiz {
   name: string;
   cards: Card[];
   createdAt: number;
+  priorityWeights?: Record<Priority, number>;
 }
 
 export interface SessionStats {

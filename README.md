@@ -121,9 +121,9 @@ If you prefer not to use Nix, you can install the dependencies on your system di
 The PAWRS algorithm uses weights to build your study session. Cards with a higher priority are more likely to be included.
 
 *   **Hard (High Priority - 1)**: You didn't know the answer or struggled a lot. These cards have the **highest chance (40%)** of appearing in a session. Answering incorrectly automatically sets a card to High priority.
-*   **Medium (2)**: You hesitated but got it right. These cards have a **medium chance (30%)** of appearing.
-*   **Easy (Low Priority - 3)**: You knew it instantly. These cards have the **lowest chance (20%)** of appearing, so you can focus on more difficult material.
-*   **Unset**: New cards that haven't been rated yet. They have a **small chance (10%)** of being chosen, ensuring you're always introducing new material.
+*   **Medium (2)**: You hesitated but got it right. These cards have a **medium chance (20%)** of appearing.
+*   **Easy (Low Priority - 3)**: You knew it instantly. These cards have the **lowest chance (5%)** of appearing, so you can focus on more difficult material.
+*   **Unset**: New cards that haven't been rated yet. They have a **significant chance (35%)** of being chosen, ensuring you're introduced to new material more quickly.
 
 ## 🧪 Running Tests
 

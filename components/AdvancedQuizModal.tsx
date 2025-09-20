@@ -72,14 +72,14 @@ export const AdvancedQuizModal: React.FC<AdvancedQuizModalProps> = ({ quiz, onCl
             
             <div className="space-y-4">
                 <div className="bg-slate-700/50 p-4 rounded-lg">
-                    <h3 className="font-bold text-white mb-2">Edit Quiz Content</h3>
-                    <p className="text-sm text-slate-300 mb-4">Add, remove, or modify the questions and answers (cards) for this quiz.</p>
+                    <h3 className="font-bold text-white mb-2">Edit Quiz</h3>
+                    <p className="text-sm text-slate-300 mb-4">Change the quiz name, manage cards, and set custom priority weights for sessions.</p>
                     <button
                         onClick={() => onEditQuiz(quiz.id)}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-sky-500 transition-colors"
                     >
                         <PencilIcon className="w-5 h-5"/>
-                        Edit Cards
+                        Edit Quiz
                     </button>
                 </div>
 

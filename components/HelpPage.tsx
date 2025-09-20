@@ -55,15 +55,15 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onBack }) => {
             </div>
             <div className="bg-slate-700/50 p-4 rounded-lg">
               <h3 className="font-bold text-orange-400">Medium (Shortcut: 2)</h3>
-              <p className="text-sm">Use this if you recalled the answer, but it took some effort. These cards have a moderate chance (~30%) of being selected.</p>
+              <p className="text-sm">Use this if you recalled the answer, but it took some effort. These cards have a moderate chance (~20%) of being selected.</p>
             </div>
             <div className="bg-slate-700/50 p-4 rounded-lg">
               <h3 className="font-bold text-sky-400">Easy (Low Priority - Shortcut: 3)</h3>
-              <p className="text-sm">Use this if you knew the answer instantly. These cards have a low chance (~20%) of being selected, allowing you to focus on more challenging vocabulary.</p>
+              <p className="text-sm">Use this if you knew the answer instantly. These cards have a low chance (~5%) of being selected, allowing you to focus on more challenging vocabulary.</p>
             </div>
              <div className="bg-slate-700/50 p-4 rounded-lg">
               <h3 className="font-bold text-slate-400">Unset</h3>
-              <p className="text-sm">All new, unrated cards start with this priority. They have a small chance (~10%) of being selected, ensuring you are gradually introduced to new material.</p>
+              <p className="text-sm">All new, unrated cards start with this priority. They have a significant chance (~35%) of being selected, ensuring you are introduced to new material more quickly.</p>
             </div>
           </div>
         </section>

@@ -11,6 +11,7 @@ import { PRIORITY_WEIGHTS } from '../constants';
 export const selectSessionCards = (quiz: Quiz, sessionSize: number): Card[] => {
   const allCards = quiz.cards;
   const totalCards = allCards.length;
+  const weights = quiz.priorityWeights || PRIORITY_WEIGHTS;
 
   // 1. If total items < N, return all items shuffled.
   if (totalCards <= sessionSize) {
@@ -40,7 +41,7 @@ export const selectSessionCards = (quiz: Quiz, sessionSize: number): Card[] => {
     if (remainingN <= 0) break;
 
     const group = groups[priority];
-    const groupWeight = PRIORITY_WEIGHTS[priority];
+    const groupWeight = weights[priority];
     
     // 4. If a group is empty, skip and redistribute its weight.
     if (group.length === 0) {
