@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Quiz, QuizDirection, ImportWarning } from './types';
-import { getQuizzes, deleteQuiz as deleteQuizService, resetQuizMastery as resetQuizMasteryService, updateQuiz as updateQuizService } from './services/quizService';
+import { Quiz, ImportWarning, Priority } from './types';
+import { getQuizzes, deleteQuiz as deleteQuizService, resetPriorities as resetPrioritiesService, updateQuiz as updateQuizService } from './services/quizService';
 import { QuizList } from './components/QuizList';
 import { CreateQuizModal } from './components/CreateQuizModal';
 import { QuizSession } from './components/QuizSession';
 import { HelpPage } from './components/HelpPage';
 import { AdvancedQuizModal } from './components/AdvancedQuizModal';
 import { BrainIcon, QuestionMarkCircleIcon } from './components/icons';
-import { INITIAL_EASE_FACTOR } from './constants';
 import { EditQuizPage } from './components/EditQuizPage';
 import { ImportWarningModal } from './components/ImportWarningModal';
 import { CardStatsPage } from './components/CardStatsPage';
@@ -23,8 +22,6 @@ const App: React.FC = () => {
     const [importWarnings, setImportWarnings] = useState<ImportWarning[] | null>(null);
 
     const [sessionSize, setSessionSize] = useState(25);
-    const [sessionOrder, setSessionOrder] = useState<'random' | 'sequential'>('random');
-    const [quizDirection, setQuizDirection] = useState<QuizDirection>('en-de');
     const [reviewMode, setReviewMode] = useState<ReviewMode>('immediate');
 
     const refreshData = useCallback(() => {
@@ -63,8 +60,8 @@ const App: React.FC = () => {
         setQuizForAdvancedSettings(null); // Close modal after deletion
     };
     
-    const handleResetMastery = (quizId: string) => {
-        resetQuizMasteryService(quizId);
+    const handleResetPriorities = (quizId: string) => {
+        resetPrioritiesService(quizId);
         setQuizzes(prevQuizzes =>
           prevQuizzes.map(quiz => {
             if (quiz.id === quizId) {
@@ -72,11 +69,7 @@ const App: React.FC = () => {
                 ...quiz,
                 cards: quiz.cards.map(card => ({
                   ...card,
-                  isNew: true,
-                  dueDate: Date.now(),
-                  interval: 0,
-                  easeFactor: INITIAL_EASE_FACTOR,
-                  repetitions: 0,
+                  priority: Priority.Unset,
                   timesSeen: 0,
                   timesCorrect: 0,
                   timesIncorrect: 0,
@@ -119,12 +112,6 @@ const App: React.FC = () => {
         setActiveQuiz(null);
     };
     
-    const DropdownArrow = () => (
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
-            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/></svg>
-        </div>
-    );
-    
     const ToggleSwitch: React.FC<{
         label: string;
         enabled: boolean;
@@ -145,41 +132,8 @@ const App: React.FC = () => {
         <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-8">
             <h2 className="text-2xl font-bold text-white mb-5">Quiz Session Options</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                <div className="flex items-center gap-2">
-                    <label htmlFor="quiz-direction" className="text-sm font-medium text-slate-300 whitespace-nowrap">Direction:</label>
-                    <div className="relative flex-grow">
-                        <select
-                            id="quiz-direction"
-                            value={quizDirection}
-                            onChange={(e) => setQuizDirection(e.target.value as QuizDirection)}
-                            className="w-full bg-slate-700 text-white border border-slate-600 rounded-lg py-1.5 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 appearance-none"
-                            aria-label="Select quiz direction"
-                        >
-                            <option value="en-de">EN → DE</option>
-                            <option value="de-en">DE → EN</option>
-                            <option value="mixed">Mixed</option>
-                        </select>
-                        <DropdownArrow />
-                    </div>
-                </div>
                  <div className="flex items-center gap-2">
-                    <label htmlFor="session-order" className="text-sm font-medium text-slate-300">Order:</label>
-                     <div className="relative flex-grow">
-                        <select
-                            id="session-order"
-                            value={sessionOrder}
-                            onChange={(e) => setSessionOrder(e.target.value as 'random' | 'sequential')}
-                            className="w-full bg-slate-700 text-white border border-slate-600 rounded-lg py-1.5 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 appearance-none"
-                            aria-label="Select session order"
-                        >
-                            <option value="random">Random</option>
-                            <option value="sequential">In Order</option>
-                        </select>
-                        <DropdownArrow />
-                    </div>
-                </div>
-                 <div className="flex items-center gap-2">
-                    <label htmlFor="session-items" className="text-sm font-medium text-slate-300">Items:</label>
+                    <label htmlFor="session-items" className="text-sm font-medium text-slate-300">Items per session:</label>
                     <input
                         id="session-items"
                         type="number"
@@ -215,8 +169,6 @@ const App: React.FC = () => {
                                 quiz={activeQuiz} 
                                 sessionSize={sessionSize} 
                                 onSessionEnd={handleEndSession} 
-                                order={sessionOrder} 
-                                quizDirection={quizDirection}
                                 reviewMode={reviewMode}
                             />;
                 }
@@ -260,7 +212,7 @@ const App: React.FC = () => {
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <BrainIcon className="w-8 h-8 text-sky-400"/>
-                            <h1 className="text-xl font-bold text-white">LingoAnki</h1>
+                            <h1 className="text-xl font-bold text-white">LingoPriority</h1>
                         </div>
                         <button 
                             onClick={() => setView('help')} 
@@ -280,7 +232,7 @@ const App: React.FC = () => {
                         quiz={quizForAdvancedSettings}
                         onClose={() => setQuizForAdvancedSettings(null)}
                         onDeleteQuiz={handleDeleteQuiz}
-                        onResetMastery={handleResetMastery}
+                        onResetMastery={handleResetPriorities}
                         onEditQuiz={handleEditQuiz}
                         onShowStats={handleShowStats}
                     />

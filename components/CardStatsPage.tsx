@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Quiz } from '../types';
+import { Quiz, Priority, Card } from '../types';
 
 interface CardStatsPageProps {
   quiz: Quiz;
@@ -31,13 +31,35 @@ const defaultWidths = {
     index: 5,
     front: 25,
     back: 25,
-    seen: 10,
-    correct: 10,
-    incorrect: 10,
-    correctness: 15,
+    priority: 12,
+    seen: 8,
+    correct: 8,
+    incorrect: 8,
+    correctness: 9,
 };
 
 type ColumnKeys = keyof typeof defaultWidths;
+
+const priorityOrder: Record<Priority, number> = {
+  [Priority.High]: 1,
+  [Priority.Medium]: 2,
+  [Priority.Low]: 3,
+  [Priority.Unset]: 4,
+};
+
+const PriorityPill: React.FC<{ priority: Priority }> = ({ priority }) => {
+    const styles: Record<Priority, string> = {
+        [Priority.High]: 'bg-red-500/20 text-red-300 border-red-500/30',
+        [Priority.Medium]: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
+        [Priority.Low]: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
+        [Priority.Unset]: 'bg-slate-600/20 text-slate-400 border-slate-500/30',
+    };
+    return (
+        <span className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${styles[priority]}`}>
+            {priority}
+        </span>
+    );
+};
 
 export const CardStatsPage: React.FC<CardStatsPageProps> = ({ quiz, onBack }) => {
 
@@ -112,19 +134,26 @@ export const CardStatsPage: React.FC<CardStatsPageProps> = ({ quiz, onBack }) =>
     };
 
     const sortedCards = [...quiz.cards].sort((a, b) => {
+        const priorityComparison = priorityOrder[a.priority] - priorityOrder[b.priority];
+        if (priorityComparison !== 0) {
+            return priorityComparison;
+        }
+        
         const correctnessA = a.timesSeen > 0 ? (a.timesCorrect / a.timesSeen) : -1;
         const correctnessB = b.timesSeen > 0 ? (b.timesCorrect / b.timesSeen) : -1;
         
         if (correctnessA !== correctnessB) {
-            return correctnessA - correctnessB;
+            return correctnessA - correctnessB; // Sort by lowest correctness first
         }
-        return b.timesSeen - a.timesSeen;
+        
+        return b.timesSeen - a.timesSeen; // Then by most seen
     });
 
     const columns: { key: ColumnKeys; label: string }[] = [
         { key: 'index', label: '#' },
         { key: 'front', label: 'Front' },
         { key: 'back', label: 'Back' },
+        { key: 'priority', label: 'Priority' },
         { key: 'seen', label: 'Seen' },
         { key: 'correct', label: 'Correct' },
         { key: 'incorrect', label: 'Incorrect' },
@@ -132,7 +161,7 @@ export const CardStatsPage: React.FC<CardStatsPageProps> = ({ quiz, onBack }) =>
     ];
 
     return (
-    <div className="w-full max-w-4xl mx-auto px-4 py-8">
+    <div className="w-full max-w-5xl mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
             <button onClick={onBack} className="text-slate-400 hover:text-white transition-colors">&larr; Back to Quizzes</button>
         </div>
@@ -174,6 +203,7 @@ export const CardStatsPage: React.FC<CardStatsPageProps> = ({ quiz, onBack }) =>
                                     <StatCell className="text-slate-500">{index + 1}</StatCell>
                                     <StatCell className="text-white font-medium">{card.front}</StatCell>
                                     <StatCell className="text-slate-300">{card.back}</StatCell>
+                                    <StatCell><PriorityPill priority={card.priority} /></StatCell>
                                     <StatCell className="text-slate-300">{card.timesSeen}</StatCell>
                                     <StatCell className="text-green-400">{card.timesCorrect}</StatCell>
                                     <StatCell className="text-red-400">{card.timesIncorrect}</StatCell>

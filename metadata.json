@@ -1,6 +1,6 @@
 {
-  "name": "LingoAnki2.7",
-  "description": "A simple Anki-like application to help you learn German words through interactive quizzes. Import your own word lists via CSV, track your progress with a spaced repetition system, and master your vocabulary.",
+  "name": "LingoAnki3.1",
+  "description": "An intelligent flashcard application that helps you learn vocabulary efficiently using a Priority-Aware Weighted Random Sampling (PAWRS) system. Import your own word lists, prioritize cards based on difficulty, and master your vocabulary.",
   "requestFramePermissions": [],
   "prompt": ""
 }

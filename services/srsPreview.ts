@@ -6,8 +6,13 @@ export const previewCardInterval = (card: Card, rating: ReviewRating): number =>
   let newInterval: number;
   const correct = rating !== ReviewRating.Again;
 
+  // FIX: Provide defaults for optional properties from Card interface to prevent runtime errors.
+  const repetitions = card.repetitions ?? 0;
+  const interval = card.interval ?? 0;
+  const easeFactor = card.easeFactor ?? 2.5; // Typical starting ease factor
+
   if (correct) {
-    if (card.repetitions === 0) { // New card -> learning step
+    if (repetitions === 0) { // New card -> learning step
       switch (rating) {
         case ReviewRating.Hard:
           newInterval = HARD_INTERVAL;
@@ -23,7 +28,7 @@ export const previewCardInterval = (card: Card, rating: ReviewRating): number =>
           break;
       }
     } else { // Reviewing a card that has been correct at least once.
-      if (card.interval <= GOOD_INTERVAL) { // Graduating
+      if (interval <= GOOD_INTERVAL) { // Graduating
         switch (rating) {
           case ReviewRating.Good:
             newInterval = GRADUATING_INTERVAL;
@@ -34,7 +39,7 @@ export const previewCardInterval = (card: Card, rating: ReviewRating): number =>
           case ReviewRating.Hard:
              // Rated Hard on first review, so it doesn't graduate yet.
              // Repeat with a slightly longer interval.
-            newInterval = card.interval * 1.2;
+            newInterval = interval * 1.2;
             break;
           default:
             newInterval = GRADUATING_INTERVAL;
@@ -42,11 +47,11 @@ export const previewCardInterval = (card: Card, rating: ReviewRating): number =>
         }
       } else { // It's a mature review card.
         if (rating === ReviewRating.Hard) {
-          newInterval = card.interval * 1.2;
+          newInterval = interval * 1.2;
         } else if (rating === ReviewRating.Good) {
-          newInterval = card.interval * card.easeFactor;
+          newInterval = interval * easeFactor;
         } else { // Easy
-          newInterval = card.interval * card.easeFactor * 1.5;
+          newInterval = interval * easeFactor * 1.5;
         }
       }
     }

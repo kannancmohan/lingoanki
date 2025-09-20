@@ -1,5 +1,4 @@
 import React from 'react';
-import { AGAIN_INTERVAL, GOOD_INTERVAL, GRADUATING_INTERVAL, EASY_GRADUATING_INTERVAL, HARD_INTERVAL } from '../constants';
 
 interface HelpPageProps {
   onBack: () => void;
@@ -11,7 +10,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onBack }) => {
       <button onClick={onBack} className="text-slate-400 hover:text-white transition-colors mb-6">&larr; Back to Quizzes</button>
       
       <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700">
-        <h1 className="text-3xl font-bold text-white mb-6">How to Use LingoAnki</h1>
+        <h1 className="text-3xl font-bold text-white mb-6">How to Use LingoPriority</h1>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-sky-400 mb-3">1. Creating a Quiz</h2>
@@ -36,35 +35,35 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onBack }) => {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-sky-400 mb-3">2. The Learning Session</h2>
           <p>
-            Once you start a quiz, you'll be shown a word (the "front" of the card) and asked to type its translation. After you submit your answer, the app will tell you if you were correct and show you the right answer.
+            Once you start a quiz, you'll be shown a word and asked to type its translation. After you submit your answer, the app will tell you if you were correct and show you the right answer. Then, you'll assign a priority to the card.
           </p>
         </section>
 
         <section className="mb-8">
-          <h2 className="text-2xl font-semibold text-sky-400 mb-3">3. Spaced Repetition Explained</h2>
+          <h2 className="text-2xl font-semibold text-sky-400 mb-3">3. Priority-Aware Learning Explained</h2>
           <p className="mb-2">
-            This app uses a Spaced Repetition System (SRS) to help you learn efficiently. The goal is to show you cards just before you're about to forget them. After each card, you rate how well you knew it. This rating determines when you'll see the card next.
+            This app uses a **Priority-Aware Weighted Random Sampling (PAWRS)** system to help you learn efficiently. Instead of a rigid schedule, you tell the app which cards are difficult for you, and it will prioritize showing them to you in future sessions.
           </p>
           <p className="mb-4 text-sm text-slate-400 italic">
-            A key concept is "graduation". When you first learn a card, it enters a short "learning phase". Once you pass this phase by answering correctly again, the card "graduates", and its next review is scheduled for much later (e.g., the next day), beginning its long-term review cycle.
+            Your study session is built by selecting cards based on weights. Cards with a higher priority have a higher chance of being included in your next session.
           </p>
 
           <div className="space-y-4">
             <div className="bg-slate-700/50 p-4 rounded-lg">
-              <h3 className="font-bold text-red-400">Again (Shortcut: 1)</h3>
-              <p className="text-sm">Use this if you got the answer wrong. The card's progress is reset, and it will be shown to you again in this session in about <span className="font-bold">{AGAIN_INTERVAL} minute</span>.</p>
+              <h3 className="font-bold text-red-400">Hard (High Priority - Shortcut: 1)</h3>
+              <p className="text-sm">Use this if you struggled to recall the answer. Cards with `High` priority have the greatest chance (~40%) of being selected for your next study session. Answering incorrectly automatically sets a card to High.</p>
             </div>
             <div className="bg-slate-700/50 p-4 rounded-lg">
-              <h3 className="font-bold text-orange-400">Hard (Shortcut: 2)</h3>
-              <p className="text-sm">Use this if you struggled to recall the answer but eventually got it right. For a new card, this means a short learning review in about <span className="font-bold">{HARD_INTERVAL} minutes</span>. For a learned card, the time until the next review increases by a small amount.</p>
+              <h3 className="font-bold text-orange-400">Medium (Shortcut: 2)</h3>
+              <p className="text-sm">Use this if you recalled the answer, but it took some effort. These cards have a moderate chance (~20%) of being selected.</p>
             </div>
             <div className="bg-slate-700/50 p-4 rounded-lg">
-              <h3 className="font-bold text-sky-400">Good (Shortcut: 3)</h3>
-              <p className="text-sm">This is the default for a correct answer. For a new card, this puts it into a short learning review (about <span className="font-bold">{GOOD_INTERVAL} minutes</span>). For a learned card, the interval increases significantly (e.g., from 1 day to 3 days, and so on).</p>
+              <h3 className="font-bold text-sky-400">Easy (Low Priority - Shortcut: 3)</h3>
+              <p className="text-sm">Use this if you knew the answer instantly. These cards have a low chance (~5%) of being selected, allowing you to focus on more challenging vocabulary.</p>
             </div>
-            <div className="bg-slate-700/50 p-4 rounded-lg">
-              <h3 className="font-bold text-green-400">Easy (Shortcut: 4)</h3>
-              <p className="text-sm">Use this if you knew the answer instantly. For a new card, this graduates it immediately to a long interval (about <span className="font-bold">{EASY_GRADUATING_INTERVAL / 60 / 24} days</span>). For a learned card, the interval will increase even more than 'Good'.</p>
+             <div className="bg-slate-700/50 p-4 rounded-lg">
+              <h3 className="font-bold text-slate-400">Unset</h3>
+              <p className="text-sm">All new, unrated cards start with this priority. They have a significant chance (~35%) of being selected, ensuring you are introduced to new material more quickly.</p>
             </div>
           </div>
         </section>
@@ -72,14 +71,20 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onBack }) => {
         <section>
           <h2 className="text-2xl font-semibold text-sky-400 mb-3">4. Tracking Your Progress & Mastery</h2>
            <p className="mb-2">
-            The app helps you visualize your learning progress for each quiz through a "Mastery" score, visible on the main list and during a session.
+            The app helps you visualize your learning progress for each quiz through a "Mastery" score. This score is an average of how well you know all the cards in the deck, based on the priorities you've set.
           </p>
           <ul className="list-disc list-inside space-y-3 pl-4">
             <li>
-              <span className="font-semibold text-white">What it means:</span> Mastery is a score that reflects not just which cards you've learned, but also how well you know them. It starts at 0% and increases as you learn new cards and correctly review existing ones. The score can go above 100% to show that you are strengthening your memory of cards you've already learned.
+              <span className="font-semibold text-white">How it's calculated:</span> Each priority level corresponds to a mastery value for that card:
+              <ul className="list-['-_'] list-inside pl-4 mt-2">
+                  <li><span className="font-semibold text-sky-400">Easy</span> (Low Priority) = 100% Mastered</li>
+                  <li><span className="font-semibold text-orange-400">Medium</span> Priority = 50% Mastered</li>
+                  <li><span className="font-semibold text-red-400">Hard</span> (High Priority) = 25% Mastered</li>
+                  <li><span className="font-semibold text-slate-400">Unset</span> Priority = 0% Mastered</li>
+              </ul>
             </li>
-            <li>
-              <span className="font-semibold text-white">How it's calculated:</span> Every card in the deck contributes points to the mastery score. A new card is worth 0 points. When you learn a card for the first time, it contributes towards the 100% mark. Each additional time you review it correctly, it contributes a little more, pushing the score beyond 100% to show deeper learning.
+             <li className="mt-2">
+              The overall quiz mastery is the average of these values across all cards in the deck. The higher your mastery, the more cards you have marked as `Easy`.
             </li>
           </ul>
         </section>

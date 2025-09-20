@@ -1,18 +1,31 @@
-export type QuizDirection = 'en-de' | 'de-en' | 'mixed';
+export enum Priority {
+  High = 'High',
+  Medium = 'Medium',
+  Low = 'Low',
+  Unset = 'Unset',
+}
+
+// FIX: Add ReviewRating enum for srsPreview.ts
+export enum ReviewRating {
+  Again,
+  Hard,
+  Good,
+  Easy,
+}
 
 export interface Card {
   id: string;
   quizId: string;
   front: string; // e.g., English
   back: string;  // e.g., German
-  dueDate: number; // timestamp
-  interval: number; // in minutes
-  easeFactor: number;
-  repetitions: number;
-  isNew: boolean;
+  priority: Priority;
   timesSeen: number;
   timesCorrect: number;
   timesIncorrect: number;
+  // FIX: Add optional properties for srsPreview.ts to avoid breaking existing logic.
+  repetitions?: number;
+  easeFactor?: number;
+  interval?: number;
 }
 
 export interface Quiz {
@@ -20,13 +33,7 @@ export interface Quiz {
   name: string;
   cards: Card[];
   createdAt: number;
-}
-
-export enum ReviewRating {
-  Again = 1,
-  Hard = 2,
-  Good = 3,
-  Easy = 4,
+  priorityWeights?: Record<Priority, number>;
 }
 
 export interface SessionStats {

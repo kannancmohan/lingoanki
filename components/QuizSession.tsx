@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Quiz, Card, ReviewRating, SessionStats, QuizDirection } from '../types';
+import { Quiz, Card, Priority, SessionStats } from '../types';
 import { selectSessionCards, updateCard } from '../services/srsService';
 import { updateQuiz as saveQuiz, calculateQuizMastery } from '../services/quizService';
 import { QuizSummary } from './QuizSummary';
-import { previewCardInterval, formatInterval } from '../services/srsPreview';
 
 type ReviewMode = 'immediate' | 'strict';
 
@@ -11,8 +10,6 @@ interface QuizSessionProps {
   quiz: Quiz;
   sessionSize: number;
   onSessionEnd: () => void;
-  order: 'random' | 'sequential';
-  quizDirection: QuizDirection;
   reviewMode: ReviewMode;
 }
 
@@ -21,20 +18,18 @@ const RatingButton: React.FC<{
   color: string, 
   label: string, 
   shortcut: string,
-  interval?: string
-}> = ({onClick, color, label, shortcut, interval}) => (
+}> = ({onClick, color, label, shortcut}) => (
     <button
         onClick={onClick}
-        className={`flex-1 py-2 px-2 rounded-lg text-white font-semibold transition-all duration-200 transform hover:scale-105 flex flex-col justify-center items-center ${color}`}
-        style={{minHeight: '80px'}}
+        className={`flex-1 py-4 px-2 rounded-lg text-white font-semibold transition-all duration-200 transform hover:scale-105 flex flex-col justify-center items-center ${color}`}
+        style={{minHeight: '70px'}}
     >
-        <span className="text-sm font-normal text-slate-300 mb-1 h-5">{interval || ''}</span>
         <span>{label} <span className="text-xs opacity-75">({shortcut})</span></span>
     </button>
 );
 
 
-export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onSessionEnd, order, quizDirection, reviewMode }) => {
+export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onSessionEnd, reviewMode }) => {
   const [currentQuiz, setCurrentQuiz] = useState<Quiz>(quiz);
   
   const [sessionQueue, setSessionQueue] = useState<Card[]>([]);
@@ -49,13 +44,8 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
   const [isFinished, setIsFinished] = useState(false);
   const [sessionStats, setSessionStats] = useState<SessionStats>({ correct: 0, incorrect: 0, total: 0 });
 
-  const [currentQuestion, setCurrentQuestion] = useState('');
-  const [currentAnswer, setCurrentAnswer] = useState('');
-  const [answerLanguage, setAnswerLanguage] = useState('German');
-  const [nextIntervals, setNextIntervals] = useState<Record<string, string> | null>(null);
-
   useEffect(() => {
-    const cards = selectSessionCards(quiz, sessionSize, order);
+    const cards = selectSessionCards(quiz, sessionSize);
     setSessionQueue(cards);
     setCurrentCard(cards[0] || null);
     setInitialDeckSize(cards.length);
@@ -63,57 +53,25 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
     if (cards.length === 0) {
         setIsFinished(true);
     }
-  }, [quiz, sessionSize, order]);
-
-  useEffect(() => {
-    if (!currentCard) return;
-
-    let direction = quizDirection;
-    if (direction === 'mixed') {
-      direction = Math.random() < 0.5 ? 'en-de' : 'de-en';
-    }
-
-    if (direction === 'en-de') {
-      setCurrentQuestion(currentCard.front);
-      setCurrentAnswer(currentCard.back);
-      setAnswerLanguage('German');
-    } else { // 'de-en'
-      setCurrentQuestion(currentCard.back);
-      setCurrentAnswer(currentCard.front);
-      setAnswerLanguage('English');
-    }
-  }, [currentCard, quizDirection]);
+  }, [quiz, sessionSize]);
 
 
   const handleCheckAnswer = useCallback(() => {
     if (!currentCard) return;
 
     const normalize = (str: string) => str.replace(/\s+/g, ' ').trim().toLowerCase();
-    const correct = normalize(userInput) === normalize(currentAnswer);
+    const correct = normalize(userInput) === normalize(currentCard.back);
     
     setIsCorrect(correct);
     setIsAnswered(true);
-  }, [userInput, currentCard, currentAnswer]);
+  }, [userInput, currentCard]);
 
-  useEffect(() => {
-    if (isAnswered && currentCard) {
-        setNextIntervals({
-            again: formatInterval(previewCardInterval(currentCard, ReviewRating.Again)),
-            hard: formatInterval(previewCardInterval(currentCard, ReviewRating.Hard)),
-            good: formatInterval(previewCardInterval(currentCard, ReviewRating.Good)),
-            easy: formatInterval(previewCardInterval(currentCard, ReviewRating.Easy)),
-        });
-    } else {
-        setNextIntervals(null);
-    }
-  }, [isAnswered, currentCard]);
-
-  const handleRateCard = useCallback((rating: ReviewRating) => {
+  const handleRateCard = useCallback((priority: Priority) => {
     if (!currentCard) return;
 
-    // --- Part 1: Determine correctness and update stats ---
+    // --- Part 1: Determine effective priority and update stats ---
     const wasAnswerCorrect = isCorrect;
-    const effectiveRating = wasAnswerCorrect ? rating : ReviewRating.Again;
+    const effectivePriority = wasAnswerCorrect ? priority : Priority.High;
 
     // Update progress tracking for unique correct cards. This drives the progress bar.
     if (wasAnswerCorrect && !correctlyAnsweredCardIds.has(currentCard.id)) {
@@ -128,10 +86,10 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
         total: prev.total + 1,
     }));
     
-    // --- Part 2: Update card SRS data and persist ---
-    const updatedSrsCard = updateCard(currentCard, effectiveRating);
+    // --- Part 2: Update card priority and persist ---
+    const updatedPriorityCard = updateCard(currentCard, effectivePriority);
     const finalUpdatedCard: Card = {
-        ...updatedSrsCard,
+        ...updatedPriorityCard,
         timesSeen: (currentCard.timesSeen || 0) + 1,
         timesCorrect: (currentCard.timesCorrect || 0) + (wasAnswerCorrect ? 1 : 0),
         timesIncorrect: (currentCard.timesIncorrect || 0) + (wasAnswerCorrect ? 0 : 1),
@@ -180,7 +138,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
 
   const handleRestartSession = () => {
     // Use the most up-to-date quiz data which is in `currentQuiz` state
-    const cards = selectSessionCards(currentQuiz, sessionSize, order);
+    const cards = selectSessionCards(currentQuiz, sessionSize);
 
     // Reset all session-specific states
     setSessionQueue(cards);
@@ -193,18 +151,16 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
     setIsCorrect(false);
     setSessionStats({ correct: 0, incorrect: 0, total: 0 });
 
-    // Un-finish the session to allow re-render. If there are no cards,
-    // the component will show the "All Done" message.
+    // Un-finish the session to allow re-render.
     setIsFinished(false);
   };
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
         if(isAnswered) {
-            if(e.key === '1') handleRateCard(ReviewRating.Again);
-            if(e.key === '2') handleRateCard(ReviewRating.Hard);
-            if(e.key === '3') handleRateCard(ReviewRating.Good);
-            if(e.key === '4') handleRateCard(ReviewRating.Easy);
+            if(e.key === '1') handleRateCard(Priority.High);
+            if(e.key === '2') handleRateCard(Priority.Medium);
+            if(e.key === '3') handleRateCard(Priority.Low);
         } else {
             if(e.key === 'Enter') {
                 e.preventDefault();
@@ -226,7 +182,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
         <div className="flex flex-col items-center justify-center min-h-screen p-4 text-white">
             <div className="w-full max-w-2xl bg-slate-800 rounded-2xl p-8 text-center">
                 <h2 className="text-2xl font-bold text-sky-400">All Done!</h2>
-                <p className="text-slate-300 mt-2">There are no new or due cards in this quiz right now. Great job!</p>
+                <p className="text-slate-300 mt-2">There are no more cards in this session. Great job!</p>
                 <button onClick={onSessionEnd} className="mt-6 bg-sky-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-sky-500 transition-colors">Go Back</button>
             </div>
         </div>
@@ -252,7 +208,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
         <div className={`bg-slate-800 rounded-2xl shadow-2xl p-8 transition-all duration-300 border ${!isAnswered ? 'border-slate-700' : isCorrect ? 'border-green-500' : 'border-red-500'}`}>
           <div className="text-center">
             <p className="text-lg text-slate-400">Translate this word:</p>
-            <h2 className="text-5xl font-bold my-8 text-white">{currentQuestion}</h2>
+            <h2 className="text-5xl font-bold my-8 text-white">{currentCard.front}</h2>
           </div>
 
           {!isAnswered ? (
@@ -261,7 +217,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                placeholder={`Type the ${answerLanguage} word...`}
+                placeholder={`Type the translation...`}
                 autoFocus
                 className="flex-grow bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-lg"
               />
@@ -271,15 +227,15 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
             <div>
               <div className={`p-4 rounded-lg mb-4 ${isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
                 <p className={`font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>{isCorrect ? 'Correct!' : 'Incorrect'}</p>
-                <p className="text-xl text-white mt-1">{currentAnswer}</p>
+                <p className="text-xl text-white mt-1">{currentCard.back}</p>
                  {!isCorrect && <p className="text-sm text-slate-400">Your answer: {userInput}</p>}
               </div>
 
+              <p className="text-center text-slate-400 mb-3 text-sm">How difficult was this card?</p>
               <div className="flex gap-2 sm:gap-4 text-sm sm:text-base">
-                <RatingButton onClick={() => handleRateCard(ReviewRating.Again)} color="bg-red-600 hover:bg-red-500" label="Again" shortcut="1" interval={nextIntervals?.again} />
-                <RatingButton onClick={() => handleRateCard(ReviewRating.Hard)} color="bg-orange-500 hover:bg-orange-400" label="Hard" shortcut="2" interval={nextIntervals?.hard} />
-                <RatingButton onClick={() => handleRateCard(ReviewRating.Good)} color="bg-sky-600 hover:bg-sky-500" label="Good" shortcut="3" interval={nextIntervals?.good} />
-                <RatingButton onClick={() => handleRateCard(ReviewRating.Easy)} color="bg-green-600 hover:bg-green-500" label="Easy" shortcut="4" interval={nextIntervals?.easy} />
+                <RatingButton onClick={() => handleRateCard(Priority.High)} color="bg-red-600 hover:bg-red-500" label="Hard" shortcut="1" />
+                <RatingButton onClick={() => handleRateCard(Priority.Medium)} color="bg-orange-500 hover:bg-orange-400" label="Medium" shortcut="2" />
+                <RatingButton onClick={() => handleRateCard(Priority.Low)} color="bg-sky-600 hover:bg-sky-500" label="Easy" shortcut="3" />
               </div>
             </div>
           )}

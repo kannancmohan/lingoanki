@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { srsServiceTests } from './unit/srsService.test';
+import { pawrsServiceTests } from './unit/srsService.test';
 import { quizFlowTests } from './integration/quizFlow.test';
-import { srsPreviewTests } from './unit/srsPreview.test';
 
-const allTestCases = [...quizFlowTests, ...srsServiceTests, ...srsPreviewTests];
+const allTestCases = [...quizFlowTests, ...pawrsServiceTests];
 
 type TestResult = 'idle' | 'running' | 'passed' | 'failed';
 
@@ -87,7 +86,7 @@ const TestRunner: React.FC = () => {
     return (
         <div className="bg-slate-900 text-white min-h-screen p-8 font-sans">
             <div className="max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold text-sky-400 mb-6">LingoAnki Test Suite</h1>
+                <h1 className="text-3xl font-bold text-sky-400 mb-6">LingoPriority Test Suite</h1>
                 <button
                     onClick={runTests}
                     disabled={isTesting}

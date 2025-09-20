@@ -25,9 +25,9 @@ export const AdvancedQuizModal: React.FC<AdvancedQuizModalProps> = ({ quiz, onCl
 
   const confirmationContent = {
     reset: {
-      title: 'Reset Quiz Progress',
-      message: `Are you sure you want to reset all progress for the "${quiz.name}" quiz? All cards will be marked as new.`,
-      confirmText: 'Yes, Reset Progress',
+      title: 'Reset Quiz Priorities',
+      message: `Are you sure you want to reset all progress for the "${quiz.name}" quiz? All cards will be set to "Unset" priority.`,
+      confirmText: 'Yes, Reset Priorities',
       buttonClass: 'bg-amber-600 hover:bg-amber-500 focus:ring-amber-500'
     },
     delete: {
@@ -72,20 +72,20 @@ export const AdvancedQuizModal: React.FC<AdvancedQuizModalProps> = ({ quiz, onCl
             
             <div className="space-y-4">
                 <div className="bg-slate-700/50 p-4 rounded-lg">
-                    <h3 className="font-bold text-white mb-2">Edit Quiz Content</h3>
-                    <p className="text-sm text-slate-300 mb-4">Add, remove, or modify the questions and answers (cards) for this quiz.</p>
+                    <h3 className="font-bold text-white mb-2">Edit Quiz</h3>
+                    <p className="text-sm text-slate-300 mb-4">Change the quiz name, manage cards, and set custom priority weights for sessions.</p>
                     <button
                         onClick={() => onEditQuiz(quiz.id)}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-sky-500 transition-colors"
                     >
                         <PencilIcon className="w-5 h-5"/>
-                        Edit Cards
+                        Edit Quiz
                     </button>
                 </div>
 
                 <div className="bg-slate-700/50 p-4 rounded-lg">
                     <h3 className="font-bold text-white mb-2">View Statistics</h3>
-                    <p className="text-sm text-slate-300 mb-4">See detailed statistics for each card, including how many times you've answered it correctly or incorrectly.</p>
+                    <p className="text-sm text-slate-300 mb-4">See detailed statistics for each card, including its priority and your answer history.</p>
                     <button
                         onClick={() => onShowStats(quiz.id)}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-indigo-500 transition-colors"
@@ -96,14 +96,14 @@ export const AdvancedQuizModal: React.FC<AdvancedQuizModalProps> = ({ quiz, onCl
                 </div>
 
                 <div className="bg-slate-700/50 p-4 rounded-lg">
-                    <h3 className="font-bold text-white mb-2">Reset Mastery</h3>
-                    <p className="text-sm text-slate-300 mb-4">This will reset all learning progress for this quiz. All cards will be marked as "new" and their review schedules will be cleared. Use this if you want to start the quiz over from the beginning.</p>
+                    <h3 className="font-bold text-white mb-2">Reset Priorities</h3>
+                    <p className="text-sm text-slate-300 mb-4">This will reset all learning progress for this quiz. All cards will be marked with "Unset" priority. Use this if you want to start the quiz over from the beginning.</p>
                     <button
                         onClick={() => setConfirmAction('reset')}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 text-white font-semibold rounded-lg hover:bg-amber-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-amber-500 transition-colors"
                     >
                         <ResetIcon className="w-5 h-5"/>
-                        Reset Quiz Progress
+                        Reset Quiz Priorities
                     </button>
                 </div>
 

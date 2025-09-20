@@ -1,9 +1,10 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Quiz, Card, ImportWarning } from '../types';
+import { Quiz, Card, ImportWarning, Priority } from '../types';
 import { createNewCard } from '../services/quizService';
 import { TrashIcon, PlusIcon, UploadIcon } from './icons';
 import { ErrorModal } from './ErrorModal';
 import { ImportResultModal } from './ImportResultModal';
+import { PRIORITY_WEIGHTS } from '../constants';
 
 interface EditQuizPageProps {
   quiz: Quiz;
@@ -21,6 +22,26 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
   const [newlyAddedCardId, setNewlyAddedCardId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const getInitialWeights = () => {
+    const weightsSource = quiz.priorityWeights || PRIORITY_WEIGHTS;
+    return {
+        [Priority.High]: weightsSource.High * 100,
+        [Priority.Medium]: weightsSource.Medium * 100,
+        [Priority.Low]: weightsSource.Low * 100,
+        [Priority.Unset]: weightsSource.Unset * 100,
+    };
+  };
+
+  const [weights, setWeights] = useState(getInitialWeights());
+
+  const handleWeightChange = (priority: Priority, value: string) => {
+      const numericValue = value === '' ? 0 : parseInt(value, 10);
+      if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= 100) {
+          setWeights(prev => ({ ...prev, [priority]: numericValue }));
+      }
+  };
+
+  const totalWeight = Object.values(weights).reduce((sum, w) => sum + (w || 0), 0);
 
   const handleCardChange = useCallback((cardId: string, field: 'front' | 'back', value: string) => {
     setCards(currentCards =>
@@ -133,6 +154,11 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
         return;
     }
 
+    if (Math.round(totalWeight) !== 100) {
+        setModalError({ title: 'Invalid Weights', message: `The sum of all priority weights must be exactly 100%. Current total is ${totalWeight}%.` });
+        return;
+    }
+
     const invalidCard = cards.find(c => !c.front.trim() || !c.back.trim());
     if (invalidCard) {
         setModalError({ title: 'Incomplete Card', message: 'All cards must have both a front and a back value. Please fill them out or delete the empty card.' });
@@ -153,14 +179,29 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
         seenFronts.add(normalizedFront);
       }
     }
+    
+    const normalizedWeights = {
+        [Priority.High]: weights[Priority.High] / 100,
+        [Priority.Medium]: weights[Priority.Medium] / 100,
+        [Priority.Low]: weights[Priority.Low] / 100,
+        [Priority.Unset]: weights[Priority.Unset] / 100,
+    };
 
     const updatedQuiz: Quiz = {
       ...quiz,
       name: quizName.trim(),
       cards: cards,
+      priorityWeights: normalizedWeights,
     };
     onSave(updatedQuiz);
   };
+
+  const priorityConfig: { priority: Priority, label: string, color: string }[] = [
+      { priority: Priority.High, label: 'Hard', color: 'text-red-400' },
+      { priority: Priority.Medium, label: 'Medium', color: 'text-orange-400' },
+      { priority: Priority.Low, label: 'Easy', color: 'text-sky-400' },
+      { priority: Priority.Unset, label: 'Unset', color: 'text-slate-400' }
+  ];
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4 py-8">
@@ -185,6 +226,35 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
       <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700">
         <h1 className="text-3xl font-bold text-white mb-6">Edit Quiz</h1>
         
+        <div className="mb-8 p-6 bg-slate-700/50 rounded-lg border border-slate-600">
+            <h2 className="text-xl font-semibold text-white mb-2">Custom Priority Weights</h2>
+            <p className="text-sm text-slate-400 mb-4">Define the chance of cards with a certain priority appearing in a study session. The total must be exactly 100%.</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {priorityConfig.map(({ priority, label, color }) => (
+                    <div key={priority}>
+                        <label htmlFor={`weight-${priority}`} className={`block text-sm font-medium mb-1 ${color}`}>{label}</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                id={`weight-${priority}`}
+                                value={weights[priority]}
+                                onChange={(e) => handleWeightChange(priority, e.target.value)}
+                                min="0" max="100" step="1"
+                                className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-sky-500 pr-8"
+                            />
+                            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
+             <div className="mt-4 text-right">
+                <span className={`font-bold ${totalWeight === 100 ? 'text-green-400' : 'text-red-400'}`}>
+                    Total: {totalWeight}%
+                </span>
+                {totalWeight !== 100 && <p className="text-xs text-red-400 mt-1">Total must be 100% to save.</p>}
+            </div>
+        </div>
+
         <div className="mb-6">
             <label htmlFor="quizName" className="block text-sm font-medium text-slate-300 mb-2">Quiz Name</label>
             <input
