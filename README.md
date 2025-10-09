@@ -125,6 +125,19 @@ The PAWRS algorithm uses weights to build your study session. Cards with a highe
 *   **Easy (Low Priority - 3)**: You knew it instantly. These cards have the **lowest chance (5%)** of appearing, so you can focus on more difficult material.
 *   **Unset**: New cards that haven't been rated yet. They have a **significant chance (35%)** of being chosen, ensuring you're introduced to new material more quickly.
 
+### How Quiz Mastery Percentage is Calculated
+
+The "Mastery" score for each quiz is a long-term measure of your proficiency with the entire deck. It's designed to give you an at-a-glance understanding of how well you know the material.
+
+The calculation is an average of the mastery value of every card in the deck, based on its current priority:
+
+-   A card marked **Easy (Low Priority)** is considered **100% mastered**.
+-   A card marked **Medium** is considered **50% mastered**.
+-   A card marked **Hard (High Priority)** is considered **25% mastered**.
+-   A new or reset card with **Unset** priority is considered **0% mastered**.
+
+The application sums these values and divides by the total number of cards to get your final mastery percentage. This means your score will increase as you learn more cards and confidently mark them as `Easy`.
+
 ## 🧪 Running Tests
 
 This project includes an in-browser test suite.
