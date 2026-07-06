@@ -22,6 +22,7 @@ export interface Quiz {
   cards: Card[];
   createdAt: number;
   priorityWeights?: Record<Priority, number>;
+  group?: string;
 }
 
 export interface SessionStats {

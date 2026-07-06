@@ -1,4 +1,4 @@
-import { createQuiz, getQuizzes, calculateQuizMastery, updateQuiz, resetPriorities } from '../../services/quizService';
+import { createQuiz, getQuizzes, calculateQuizMastery, updateQuiz, resetPriorities, getGroups, addGroup } from '../../services/quizService';
 import { updateCard, selectSessionCards } from '../../services/sessionService';
 import { Priority, Quiz } from '../../types';
 import { expect, TestCase } from '../test-utils';
@@ -90,6 +90,42 @@ export const quizFlowTests: TestCase[] = [
             // Check that mastery is 0 again
             mastery = calculateQuizMastery(resetQuiz);
             expect(mastery).toBe(0);
+        }
+    },
+    {
+        name: 'Integration Test: Quiz group adding and global availability',
+        testFn: async () => {
+            // 1. Verify we can add a new group globally
+            const groupName = "Spanish Verbs";
+            addGroup(groupName);
+            
+            const currentGroups = getGroups();
+            const groupExists = currentGroups.includes(groupName);
+            if (!groupExists) {
+                throw new Error(`Expected global groups to include "${groupName}", but got: ${JSON.stringify(currentGroups)}`);
+            }
+
+            // 2. Create a quiz with this custom group
+            const quizName = "Spanish Present Tense";
+            const csvData = "hablar,to speak\ncomer,to eat";
+            const { newQuiz } = createQuiz(quizName, csvData, groupName);
+
+            // 3. Verify the quiz is saved under the custom group
+            const reloadedQuiz = getQuizzes().find(q => q.id === newQuiz.id);
+            expect(reloadedQuiz).toBeDefined();
+            if (!reloadedQuiz) throw new Error("Quiz should be defined");
+            expect(reloadedQuiz.group).toBe(groupName);
+
+            // 4. Update the quiz to a different group and verify
+            const anotherGroup = "Advanced Spanish";
+            addGroup(anotherGroup);
+            reloadedQuiz.group = anotherGroup;
+            updateQuiz(reloadedQuiz);
+
+            const updatedReloadedQuiz = getQuizzes().find(q => q.id === newQuiz.id);
+            expect(updatedReloadedQuiz).toBeDefined();
+            if (!updatedReloadedQuiz) throw new Error("Quiz should be defined");
+            expect(updatedReloadedQuiz.group).toBe(anotherGroup);
         }
     }
 ];

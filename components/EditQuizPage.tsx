@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Quiz, Card, ImportWarning, Priority } from '../types';
 import { createNewCard } from '../services/quizService';
+import { GroupSelector } from './GroupSelector';
 import { TrashIcon, PlusIcon, UploadIcon } from './icons';
 import { ErrorModal } from './ErrorModal';
 import { ImportResultModal } from './ImportResultModal';
@@ -14,6 +15,7 @@ interface EditQuizPageProps {
 
 export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCancel }) => {
   const [quizName, setQuizName] = useState(quiz.name);
+  const [selectedGroup, setSelectedGroup] = useState(quiz.group || 'default');
   const [cards, setCards] = useState<Card[]>(quiz.cards);
   const [modalError, setModalError] = useState<{ title: string; message: string; } | null>(null);
   const [importResult, setImportResult] = useState<{ addedCount: number; skipped: ImportWarning[] } | null>(null);
@@ -192,6 +194,7 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
       name: quizName.trim(),
       cards: cards,
       priorityWeights: normalizedWeights,
+      group: selectedGroup,
     };
     onSave(updatedQuiz);
   };
@@ -266,6 +269,10 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
               placeholder="e.g., Common Nouns"
               required
             />
+        </div>
+
+        <div className="mb-6">
+            <GroupSelector selectedGroup={selectedGroup} onChange={setSelectedGroup} />
         </div>
         
         <h2 className="text-xl font-semibold text-white mb-4">Cards ({cards.length})</h2>

@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { createQuiz } from '../services/quizService';
 import { ImportWarning } from '../types';
+import { GroupSelector } from './GroupSelector';
 
 interface CreateQuizModalProps {
   onClose: () => void;
@@ -9,6 +10,7 @@ interface CreateQuizModalProps {
 
 export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ onClose, onQuizCreated }) => {
   const [quizName, setQuizName] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState('default');
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +32,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ onClose, onQui
 
     try {
       const fileContent = await csvFile.text();
-      const { warnings } = createQuiz(quizName, fileContent);
+      const { warnings } = createQuiz(quizName, fileContent, selectedGroup);
       onQuizCreated(warnings);
       onClose();
     } catch (err) {
@@ -38,7 +40,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ onClose, onQui
     } finally {
       setIsLoading(false);
     }
-  }, [quizName, csvFile, onQuizCreated, onClose]);
+  }, [quizName, csvFile, selectedGroup, onQuizCreated, onClose]);
 
   return (
     <div className="fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -56,6 +58,9 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ onClose, onQui
               placeholder="e.g., Common Nouns"
               required
             />
+          </div>
+          <div className="mb-4">
+            <GroupSelector selectedGroup={selectedGroup} onChange={setSelectedGroup} />
           </div>
           <div className="mb-6">
             <label htmlFor="csvFile" className="block text-sm font-medium text-slate-300 mb-2">Words (CSV file)</label>

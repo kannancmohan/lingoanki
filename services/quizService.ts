@@ -1,6 +1,31 @@
 import { Quiz, Card, ImportWarning, Priority } from '../types';
 
 const QUIZZES_KEY = 'lingoAnkiQuizzes';
+const GROUPS_KEY = 'lingoAnkiGroups';
+
+export const getGroups = (): string[] => {
+  try {
+    const groupsJson = localStorage.getItem(GROUPS_KEY);
+    const groups: string[] = groupsJson ? JSON.parse(groupsJson) : ['default'];
+    if (!groups.includes('default')) {
+      groups.unshift('default');
+    }
+    return Array.from(new Set(groups.map(g => g.trim())));
+  } catch (error) {
+    console.error("Failed to parse groups from localStorage", error);
+    return ['default'];
+  }
+};
+
+export const addGroup = (groupName: string): void => {
+  const trimmed = groupName.trim();
+  if (!trimmed) return;
+  const groups = getGroups();
+  if (!groups.some(g => g.toLowerCase() === trimmed.toLowerCase())) {
+    groups.push(trimmed);
+    localStorage.setItem(GROUPS_KEY, JSON.stringify(groups));
+  }
+};
 
 export interface CreateQuizResult {
     newQuiz: Quiz;
@@ -22,7 +47,7 @@ export const getQuiz = (quizId: string): Quiz | undefined => {
   return quizzes.find(q => q.id === quizId);
 };
 
-export const createQuiz = (name: string, csvData: string): CreateQuizResult => {
+export const createQuiz = (name: string, csvData: string, group?: string): CreateQuizResult => {
     const quizzes = getQuizzes();
     const normalizedNewName = name.trim().toLowerCase();
 
@@ -102,6 +127,7 @@ export const createQuiz = (name: string, csvData: string): CreateQuizResult => {
         name: name.trim(),
         cards: createdCards,
         createdAt: Date.now(),
+        group: (group || 'default').trim(),
     };
 
     const updatedQuizzes = [...quizzes, newQuiz];
