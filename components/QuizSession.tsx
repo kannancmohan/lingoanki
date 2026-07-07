@@ -3,6 +3,7 @@ import { Quiz, Card, Priority, SessionStats } from '../types';
 import { selectSessionCards, updateCard } from '../services/sessionService';
 import { updateQuiz as saveQuiz, calculateQuizMastery } from '../services/quizService';
 import { QuizSummary } from './QuizSummary';
+import { isAnswerCorrect, AnswerDiffViewer } from './AnswerDiffViewer';
 
 type ReviewMode = 'immediate' | 'strict';
 
@@ -59,8 +60,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
   const handleCheckAnswer = useCallback(() => {
     if (!currentCard) return;
 
-    const normalize = (str: string) => str.replace(/\s+/g, ' ').trim().toLowerCase();
-    const correct = normalize(userInput) === normalize(currentCard.back);
+    const correct = isAnswerCorrect(currentCard.back, userInput);
     
     setIsCorrect(correct);
     setIsAnswered(true);
@@ -228,7 +228,12 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
               <div className={`p-4 rounded-lg mb-4 ${isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
                 <p className={`font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>{isCorrect ? 'Correct!' : 'Incorrect'}</p>
                 <p className="text-xl text-white mt-1">{currentCard.back}</p>
-                 {!isCorrect && <p className="text-sm text-slate-400">Your answer: {userInput}</p>}
+                {!isCorrect && (
+                  <>
+                    <p className="text-sm text-slate-400 mt-2">Your answer: {userInput || <span className="italic text-slate-500">Empty</span>}</p>
+                    <AnswerDiffViewer correct={currentCard.back} user={userInput} />
+                  </>
+                )}
               </div>
 
               <p className="text-center text-slate-400 mb-3 text-sm">How difficult was this card?</p>
