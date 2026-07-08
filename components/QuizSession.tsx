@@ -158,9 +158,18 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
         if(isAnswered) {
-            if(e.key === '1') handleRateCard(Priority.High);
-            if(e.key === '2') handleRateCard(Priority.Medium);
-            if(e.key === '3') handleRateCard(Priority.Low);
+            if(e.key === '1') {
+                e.preventDefault();
+                handleRateCard(Priority.High);
+            }
+            if(e.key === '2') {
+                e.preventDefault();
+                handleRateCard(Priority.Medium);
+            }
+            if(e.key === '3') {
+                e.preventDefault();
+                handleRateCard(Priority.Low);
+            }
         } else {
             if(e.key === 'Enter') {
                 e.preventDefault();
