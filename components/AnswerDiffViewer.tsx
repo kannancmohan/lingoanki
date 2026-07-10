@@ -27,6 +27,10 @@ export const isAnswerCorrect = (correct: string, user: string): boolean => {
 };
 
 export const AnswerDiffViewer: React.FC<AnswerDiffViewerProps> = ({ correct, user }) => {
+  if (!user || !user.trim()) {
+    return null;
+  }
+
   const correctClauses = segmentAnswer(correct);
   const userClauses = segmentAnswer(user);
 
@@ -59,7 +63,6 @@ export const AnswerDiffViewer: React.FC<AnswerDiffViewerProps> = ({ correct, use
               >
                 <div className="flex items-center gap-1.5 text-xs font-semibold text-red-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                  Missing conjugation
                 </div>
                 <span className="text-slate-400 font-mono text-sm line-through decoration-slate-600/50">
                   {correctClause}
