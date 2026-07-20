@@ -16,6 +16,14 @@ export interface Card {
   timesIncorrect: number;
 }
 
+export interface VoiceSettings {
+  enabled: boolean;
+  language: string;    // e.g., 'de-DE', 'en-US', 'es-ES', 'fr-FR'
+  voiceURI?: string;   // Stores the specific SpeechSynthesisVoice.voiceURI
+  rate: number;        // Speech speed (0.5 to 2.0)
+  pitch: number;       // Tone pitch (0.5 to 2.0)
+}
+
 export interface Quiz {
   id: string;
   name: string;
@@ -23,6 +31,7 @@ export interface Quiz {
   createdAt: number;
   priorityWeights?: Record<Priority, number>;
   group?: string;
+  voiceSettings?: VoiceSettings; // New optional setting
 }
 
 export interface SessionStats {

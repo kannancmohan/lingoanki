@@ -1,11 +1,11 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Quiz, Card, ImportWarning, Priority } from '../types';
+import { Quiz, Card, ImportWarning, Priority, VoiceSettings } from '../types';
 import { createNewCard } from '../services/quizService';
 import { GroupSelector } from './GroupSelector';
 import { TrashIcon, PlusIcon, UploadIcon } from './icons';
 import { ErrorModal } from './ErrorModal';
 import { ImportResultModal } from './ImportResultModal';
-import { PRIORITY_WEIGHTS } from '../constants';
+import { PRIORITY_WEIGHTS, DEFAULT_VOICE_SETTINGS } from '../constants';
 
 interface EditQuizPageProps {
   quiz: Quiz;
@@ -23,6 +23,73 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
   const cardInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
   const [newlyAddedCardId, setNewlyAddedCardId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>(() => {
+    return quiz.voiceSettings || { ...DEFAULT_VOICE_SETTINGS };
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    const updateVoices = () => {
+      setVoices(window.speechSynthesis.getVoices() || []);
+    };
+
+    updateVoices();
+    
+    window.speechSynthesis.onvoiceschanged = updateVoices;
+    window.speechSynthesis.addEventListener('voiceschanged', updateVoices);
+
+    return () => {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.removeEventListener('voiceschanged', updateVoices);
+      }
+    };
+  }, []);
+
+  const filteredVoices = voices.filter(v => {
+    const langLower = v.lang.toLowerCase().replace('_', '-');
+    const targetLower = voiceSettings.language.toLowerCase().replace('_', '-');
+    return langLower.startsWith(targetLower) || targetLower.startsWith(langLower) || langLower.split('-')[0] === targetLower.split('-')[0];
+  });
+
+  useEffect(() => {
+    if (voiceSettings.enabled && filteredVoices.length > 0) {
+      const voiceExists = filteredVoices.some(v => v.voiceURI === voiceSettings.voiceURI);
+      if (!voiceExists) {
+        setVoiceSettings(prev => ({ ...prev, voiceURI: filteredVoices[0].voiceURI }));
+      }
+    }
+  }, [voiceSettings.enabled, voiceSettings.language, voices, voiceSettings.voiceURI]);
+
+  const handleToggleVoice = (enabled: boolean) => {
+    setVoiceSettings(prev => ({ ...prev, enabled }));
+  };
+
+  const handleLanguageChange = (language: string) => {
+    setVoiceSettings(prev => {
+      const filtered = voices.filter(v => {
+        const langLower = v.lang.toLowerCase().replace('_', '-');
+        const targetLower = language.toLowerCase().replace('_', '-');
+        return langLower.startsWith(targetLower) || targetLower.startsWith(langLower) || langLower.split('-')[0] === targetLower.split('-')[0];
+      });
+      const firstVoiceURI = filtered.length > 0 ? filtered[0].voiceURI : undefined;
+      return {
+        ...prev,
+        language,
+        voiceURI: firstVoiceURI,
+      };
+    });
+  };
+
+  const handleVoiceChange = (voiceURI: string) => {
+    setVoiceSettings(prev => ({ ...prev, voiceURI }));
+  };
+
+  const handleVoiceSettingsSlider = (field: 'rate' | 'pitch', value: number) => {
+    setVoiceSettings(prev => ({ ...prev, [field]: value }));
+  };
 
   const getInitialWeights = () => {
     const weightsSource = quiz.priorityWeights || PRIORITY_WEIGHTS;
@@ -195,6 +262,7 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
       cards: cards,
       priorityWeights: normalizedWeights,
       group: selectedGroup,
+      voiceSettings: voiceSettings,
     };
     onSave(updatedQuiz);
   };
@@ -256,6 +324,104 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
                 </span>
                 {totalWeight !== 100 && <p className="text-xs text-red-400 mt-1">Total must be 100% to save.</p>}
             </div>
+        </div>
+
+        {/* Voice & Pronunciation Section */}
+        <div id="voice-settings-card" className="mb-8 p-6 bg-slate-700/50 rounded-lg border border-slate-600">
+            <div className="flex items-center justify-between mb-4">
+                <div>
+                    <h2 className="text-xl font-semibold text-white">Voice & Pronunciation</h2>
+                    <p className="text-sm text-slate-400">Configure text-to-speech settings to hear correct pronunciations during your session.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                        type="checkbox" 
+                        id="enable-voice"
+                        checked={voiceSettings.enabled} 
+                        onChange={(e) => handleToggleVoice(e.target.checked)}
+                        className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+                </label>
+            </div>
+
+            {voiceSettings.enabled && (
+                <div className="space-y-4 pt-4 border-t border-slate-600/50">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Language Select */}
+                        <div>
+                            <label htmlFor="voice-language" className="block text-sm font-medium text-slate-300 mb-1">Target Language</label>
+                            <select
+                                id="voice-language"
+                                value={voiceSettings.language}
+                                onChange={(e) => handleLanguageChange(e.target.value)}
+                                className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                            >
+                                <option value="de-DE">German (de-DE)</option>
+                                <option value="en-US">English (en-US)</option>
+                                <option value="es-ES">Spanish (es-ES)</option>
+                                <option value="fr-FR">French (fr-FR)</option>
+                                <option value="it-IT">Italian (it-IT)</option>
+                                <option value="ja-JP">Japanese (ja-JP)</option>
+                            </select>
+                        </div>
+
+                        {/* Voice Select */}
+                        <div>
+                            <label htmlFor="voice-speaker" className="block text-sm font-medium text-slate-300 mb-1">Speaker Voice</label>
+                            <select
+                                id="voice-speaker"
+                                value={voiceSettings.voiceURI || ''}
+                                onChange={(e) => handleVoiceChange(e.target.value)}
+                                className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                            >
+                                {filteredVoices.map(v => (
+                                    <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>
+                                ))}
+                                {filteredVoices.length === 0 && <option value="">No voices available for language</option>}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                        {/* Rate Slider */}
+                        <div>
+                            <div className="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                                <label htmlFor="voice-rate">Speech Rate (Speed)</label>
+                                <span className="text-sky-400">{voiceSettings.rate.toFixed(1)}x</span>
+                            </div>
+                            <input 
+                                id="voice-rate"
+                                type="range" 
+                                min="0.5" 
+                                max="2.0" 
+                                step="0.1" 
+                                value={voiceSettings.rate}
+                                onChange={(e) => handleVoiceSettingsSlider('rate', parseFloat(e.target.value))}
+                                className="w-full h-1.5 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                            />
+                        </div>
+
+                        {/* Pitch Slider */}
+                        <div>
+                            <div className="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                                <label htmlFor="voice-pitch">Speech Pitch (Tone)</label>
+                                <span className="text-sky-400">{voiceSettings.pitch.toFixed(1)}</span>
+                            </div>
+                            <input 
+                                id="voice-pitch"
+                                type="range" 
+                                min="0.5" 
+                                max="2.0" 
+                                step="0.1" 
+                                value={voiceSettings.pitch}
+                                onChange={(e) => handleVoiceSettingsSlider('pitch', parseFloat(e.target.value))}
+                                className="w-full h-1.5 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
 
         <div className="mb-6">

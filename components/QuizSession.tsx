@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Quiz, Card, Priority, SessionStats } from '../types';
+import { Quiz, Card, Priority, SessionStats, VoiceSettings } from '../types';
 import { selectSessionCards, updateCard } from '../services/sessionService';
 import { updateQuiz as saveQuiz, calculateQuizMastery } from '../services/quizService';
 import { QuizSummary } from './QuizSummary';
 import { isAnswerCorrect, AnswerDiffViewer } from './AnswerDiffViewer';
+import { SpeakerIcon } from './icons';
 
 type ReviewMode = 'immediate' | 'strict';
 
@@ -13,6 +14,29 @@ interface QuizSessionProps {
   onSessionEnd: () => void;
   reviewMode: ReviewMode;
 }
+
+export const speakText = (text: string, settings: VoiceSettings) => {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+  // 1. Cancel any active pronunciations
+  window.speechSynthesis.cancel();
+
+  // 2. Prepare utterance
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = settings.language;
+  utterance.rate = settings.rate;
+  utterance.pitch = settings.pitch;
+
+  // 3. Match selected VoiceURI if exists
+  if (settings.voiceURI) {
+    const voices = window.speechSynthesis.getVoices();
+    const voice = voices.find(v => v.voiceURI === settings.voiceURI);
+    if (voice) utterance.voice = voice;
+  }
+
+  // 4. Pronounce!
+  window.speechSynthesis.speak(utterance);
+};
 
 const RatingButton: React.FC<{
   onClick: () => void, 
@@ -236,7 +260,20 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
             <div>
               <div className={`p-4 rounded-lg mb-4 ${isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
                 <p className={`font-bold ${isCorrect ? 'text-green-400' : 'text-red-400'}`}>{isCorrect ? 'Correct!' : 'Incorrect'}</p>
-                <p className="text-xl text-white mt-1">{currentCard.back}</p>
+                <div className="flex items-center gap-3 mt-1">
+                  <p className="text-xl text-white font-medium">{currentCard.back}</p>
+                  {currentQuiz.voiceSettings?.enabled && (
+                    <button 
+                      id="speak-button"
+                      onClick={() => speakText(currentCard.back, currentQuiz.voiceSettings!)}
+                      className="p-1 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-full transition-all"
+                      title="Hear pronunciation"
+                      aria-label="Speak translation"
+                    >
+                      <SpeakerIcon className="w-6 h-6" />
+                    </button>
+                  )}
+                </div>
                 {!isCorrect && (
                   <>
                     <p className="text-sm text-slate-400 mt-2">Your answer: {userInput || <span className="italic text-slate-500">Empty</span>}</p>

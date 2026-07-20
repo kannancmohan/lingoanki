@@ -3,8 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { pawrsServiceTests } from './unit/sessionService.test';
 import { quizFlowTests } from './integration/quizFlow.test';
 import { answerDiffTests } from './unit/answerDiff.test';
+import { ttsSettingsTests } from './unit/ttsSettings.test';
 
-const allTestCases = [...quizFlowTests, ...pawrsServiceTests, ...answerDiffTests];
+const allTestCases = [...quizFlowTests, ...pawrsServiceTests, ...answerDiffTests, ...ttsSettingsTests];
 
 type TestResult = 'idle' | 'running' | 'passed' | 'failed';
 
