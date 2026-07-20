@@ -20,6 +20,9 @@ This document outlines the detailed strategy to implement a Text-to-Speech (TTS)
         *   **Voice Selector**: A dynamically populated select element listing available synthesizer voices registered in the browser for the selected language.
         *   **Speech Rate (Speed)**: A slider ranging from `0.5` (slow) to `2.0` (fast), defaulting to `1.0`.
         *   **Speech Pitch (Tone)**: A slider ranging from `0.5` (low pitch) to `2.0` (high pitch), defaulting to `1.0`.
+        *   **Live Test Pronunciation**:
+            *   An input field dynamically pre-populated with standard welcoming sample phrases depending on the selected language (e.g., "Guten Tag! Wie geht es dir heute?" for German, "Hello! How are you doing today?" for English).
+            *   An adjacent "Test Voice" button styled with a speaker icon that speaks the input text immediately with the active voice, speed, and pitch settings, letting the user preview their voice settings instantly.
 
 3.  **Dynamic Web Speech API Integration**:
     *   Use the native, widely supported client-side **Web Speech API (`window.speechSynthesis`)**. It is completely free, runs offline, requires no API keys, and integrates seamlessly with all modern browsers.
@@ -281,6 +284,7 @@ const speakText = (text: string, settings: VoiceSettings) => {
 4.  **Edit Quiz Page Form Fields**:
     *   Integrate the "Voice & Pronunciation" section in `/components/EditQuizPage.tsx` after the Custom Priority Weights section.
     *   Utilize standard React `useEffect` with `window.speechSynthesis` and `onvoiceschanged` listeners to fetch dynamic browser voice inputs.
+    *   Implement **Live Test Pronunciation** with language-specific pre-populated sample phrases and an interactive "Test Voice" button.
     *   Make sure `handleSave` saves the custom settings into the quiz.
 5.  **Quiz Session Display**:
     *   Update `/components/QuizSession.tsx` to render the interactive `SpeakerIcon` next to the correct answer if settings are enabled.

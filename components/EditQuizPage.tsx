@@ -2,16 +2,26 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Quiz, Card, ImportWarning, Priority, VoiceSettings } from '../types';
 import { createNewCard } from '../services/quizService';
 import { GroupSelector } from './GroupSelector';
-import { TrashIcon, PlusIcon, UploadIcon } from './icons';
+import { TrashIcon, PlusIcon, UploadIcon, SpeakerIcon } from './icons';
 import { ErrorModal } from './ErrorModal';
 import { ImportResultModal } from './ImportResultModal';
 import { PRIORITY_WEIGHTS, DEFAULT_VOICE_SETTINGS } from '../constants';
+import { speakText } from './QuizSession';
 
 interface EditQuizPageProps {
   quiz: Quiz;
   onSave: (updatedQuiz: Quiz) => void;
   onCancel: () => void;
 }
+
+const LANGUAGE_SAMPLE_PHRASES: Record<string, string> = {
+  'de-DE': 'Guten Tag! Wie geht es dir heute?',
+  'en-US': 'Hello! How are you doing today?',
+  'es-ES': '¡Hola! ¿Cómo estás hoy?',
+  'fr-FR': "Bonjour ! Comment allez-vous aujourd'hui ?",
+  'it-IT': 'Ciao! Come stai oggi?',
+  'ja-JP': 'こんにちは！今日の調子はいかがですか？',
+};
 
 export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCancel }) => {
   const [quizName, setQuizName] = useState(quiz.name);
@@ -28,6 +38,8 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
   const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>(() => {
     return quiz.voiceSettings || { ...DEFAULT_VOICE_SETTINGS };
   });
+
+  const [testPhrase, setTestPhrase] = useState(() => LANGUAGE_SAMPLE_PHRASES[voiceSettings.language] || 'Hello!');
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -68,6 +80,7 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
   };
 
   const handleLanguageChange = (language: string) => {
+    setTestPhrase(LANGUAGE_SAMPLE_PHRASES[language] || 'Hello!');
     setVoiceSettings(prev => {
       const filtered = voices.filter(v => {
         const langLower = v.lang.toLowerCase().replace('_', '-');
@@ -418,6 +431,31 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
                                 onChange={(e) => handleVoiceSettingsSlider('pitch', parseFloat(e.target.value))}
                                 className="w-full h-1.5 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-500"
                             />
+                        </div>
+                    </div>
+
+                    {/* Live Test Pronunciation Section */}
+                    <div className="pt-4 border-t border-slate-600/50">
+                        <label htmlFor="test-phrase-input" className="block text-sm font-medium text-slate-300 mb-1">Test Pronunciation</label>
+                        <div className="flex gap-2">
+                            <input 
+                                id="test-phrase-input"
+                                type="text"
+                                value={testPhrase}
+                                onChange={(e) => setTestPhrase(e.target.value)}
+                                className="flex-1 bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
+                                placeholder="Type a word or sentence to test..."
+                            />
+                            <button
+                                id="test-pronunciation-btn"
+                                type="button"
+                                onClick={() => speakText(testPhrase, voiceSettings)}
+                                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-md flex items-center gap-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+                                aria-label="Test speaker pronunciation"
+                            >
+                                <SpeakerIcon className="w-5 h-5" />
+                                Test Voice
+                            </button>
                         </div>
                     </div>
                 </div>
