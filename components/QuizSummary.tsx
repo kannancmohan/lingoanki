@@ -10,6 +10,27 @@ interface QuizSummaryProps {
 export const QuizSummary: React.FC<QuizSummaryProps> = ({ stats, onFinish, onRestart }) => {
   const score = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isInputActive = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
+      if (isInputActive) return;
+
+      if (e.key === 'Enter') {
+        if (document.activeElement?.getAttribute('data-action') === 'finish') {
+          return;
+        }
+        e.preventDefault();
+        onRestart();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        onFinish();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onRestart, onFinish]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 text-white">
       <div className="w-full max-w-md bg-slate-800 rounded-2xl shadow-2xl p-8 border border-slate-700 text-center">
@@ -63,14 +84,17 @@ export const QuizSummary: React.FC<QuizSummaryProps> = ({ stats, onFinish, onRes
 
         <div className="w-full mt-8 flex flex-col gap-4">
             <button
+              autoFocus
               onClick={onRestart}
-              className="w-full bg-sky-600 text-white font-semibold py-3 rounded-lg hover:bg-sky-500 transition-colors"
+              className="w-full bg-sky-600 text-white font-semibold py-3 rounded-lg hover:bg-sky-500 transition-colors focus:ring-2 focus:ring-sky-400 focus:outline-none"
+              data-action="restart"
             >
               Start Again
             </button>
             <button 
               onClick={onFinish} 
-              className="w-full text-slate-300 font-semibold py-3 rounded-lg hover:bg-slate-700 transition-colors"
+              className="w-full text-slate-300 font-semibold py-3 rounded-lg hover:bg-slate-700 transition-colors focus:ring-2 focus:ring-slate-500 focus:outline-none"
+              data-action="finish"
             >
               Back to Quizzes
             </button>

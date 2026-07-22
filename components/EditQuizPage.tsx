@@ -104,6 +104,17 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
     setVoiceSettings(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleResetVoiceSettings = () => {
+    setVoiceSettings({
+      enabled: true,
+      language: DEFAULT_VOICE_SETTINGS.language,
+      rate: DEFAULT_VOICE_SETTINGS.rate,
+      pitch: DEFAULT_VOICE_SETTINGS.pitch,
+      voiceURI: undefined,
+    });
+    setTestPhrase(LANGUAGE_SAMPLE_PHRASES[DEFAULT_VOICE_SETTINGS.language] || 'Hello!');
+  };
+
   const getInitialWeights = () => {
     const weightsSource = quiz.priorityWeights || PRIORITY_WEIGHTS;
     return {
@@ -435,28 +446,38 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
                     </div>
 
                     {/* Live Test Pronunciation Section */}
-                    <div className="pt-4 border-t border-slate-600/50">
-                        <label htmlFor="test-phrase-input" className="block text-sm font-medium text-slate-300 mb-1">Test Pronunciation</label>
-                        <div className="flex gap-2">
-                            <input 
-                                id="test-phrase-input"
-                                type="text"
-                                value={testPhrase}
-                                onChange={(e) => setTestPhrase(e.target.value)}
-                                className="flex-1 bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
-                                placeholder="Type a word or sentence to test..."
-                            />
-                            <button
-                                id="test-pronunciation-btn"
-                                type="button"
-                                onClick={() => speakText(testPhrase, voiceSettings)}
-                                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-md flex items-center gap-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-800"
-                                aria-label="Test speaker pronunciation"
-                            >
-                                <SpeakerIcon className="w-5 h-5" />
-                                Test Voice
-                            </button>
+                    <div className="pt-4 border-t border-slate-600/50 flex flex-col sm:flex-row sm:items-end gap-4">
+                        <div className="flex-1">
+                            <label htmlFor="test-phrase-input" className="block text-sm font-medium text-slate-300 mb-1">Test Pronunciation</label>
+                            <div className="flex gap-2">
+                                <input 
+                                    id="test-phrase-input"
+                                    type="text"
+                                    value={testPhrase}
+                                    onChange={(e) => setTestPhrase(e.target.value)}
+                                    className="flex-1 bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
+                                    placeholder="Type a word or sentence to test..."
+                                />
+                                <button
+                                    id="test-pronunciation-btn"
+                                    type="button"
+                                    onClick={() => speakText(testPhrase, voiceSettings)}
+                                    className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-md flex items-center gap-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+                                    aria-label="Test speaker pronunciation"
+                                >
+                                    <SpeakerIcon className="w-5 h-5" />
+                                    Test Voice
+                                </button>
+                            </div>
                         </div>
+                        <button
+                            id="reset-voice-settings-btn"
+                            type="button"
+                            onClick={handleResetVoiceSettings}
+                            className="px-4 py-2 bg-slate-600/50 hover:bg-slate-600 border border-slate-500 text-slate-300 hover:text-white rounded-md text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:self-end h-[38px]"
+                        >
+                            Reset to Defaults
+                        </button>
                     </div>
                 </div>
             )}

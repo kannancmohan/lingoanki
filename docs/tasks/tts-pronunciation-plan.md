@@ -23,6 +23,8 @@ This document outlines the detailed strategy to implement a Text-to-Speech (TTS)
         *   **Live Test Pronunciation**:
             *   An input field dynamically pre-populated with standard welcoming sample phrases depending on the selected language (e.g., "Guten Tag! Wie geht es dir heute?" for German, "Hello! How are you doing today?" for English).
             *   An adjacent "Test Voice" button styled with a speaker icon that speaks the input text immediately with the active voice, speed, and pitch settings, letting the user preview their voice settings instantly.
+        *   **Reset to Defaults**:
+            *   A reset button/action (e.g., "Reset to Defaults") that allows users to instantly restore the language, rate, and pitch to their predefined fallback defaults.
 
 3.  **Dynamic Web Speech API Integration**:
     *   Use the native, widely supported client-side **Web Speech API (`window.speechSynthesis`)**. It is completely free, runs offline, requires no API keys, and integrates seamlessly with all modern browsers.
@@ -33,6 +35,10 @@ This document outlines the detailed strategy to implement a Text-to-Speech (TTS)
     *   The speaker icon appears next to the correct answer on the feedback panel *after* the user submits their answer.
     *   Clicking the speaker icon triggers the TTS voice to pronounce the back of the card (the target translation, e.g., German words).
     *   Ensure any active utterance is canceled before speaking a new one to prevent overlaying sounds.
+
+5.  **Keyboard Shortcut Support**:
+    *   Pressing the `s` or `S` key on the keyboard during an active quiz session when the speaker icon is visible (feedback panel has revealed the correct answer) should trigger the pronunciation.
+    *   Ensure that the shortcut is only handled when the answer feedback is displayed and the user is not focused on an input element (to prevent typing `'s'` into form fields from triggering speech).
 
 ---
 
@@ -285,9 +291,11 @@ const speakText = (text: string, settings: VoiceSettings) => {
     *   Integrate the "Voice & Pronunciation" section in `/components/EditQuizPage.tsx` after the Custom Priority Weights section.
     *   Utilize standard React `useEffect` with `window.speechSynthesis` and `onvoiceschanged` listeners to fetch dynamic browser voice inputs.
     *   Implement **Live Test Pronunciation** with language-specific pre-populated sample phrases and an interactive "Test Voice" button.
+    *   Add a **"Reset to Defaults"** action button that rolls back customization to default settings seamlessly.
     *   Make sure `handleSave` saves the custom settings into the quiz.
 5.  **Quiz Session Display**:
     *   Update `/components/QuizSession.tsx` to render the interactive `SpeakerIcon` next to the correct answer if settings are enabled.
+    *   Add a **keyboard listener** for the `s` or `S` key when the answer is revealed to invoke pronunciation without a mouse click. Avoid conflicts when input fields are active.
 6.  **Add and Register Unit Tests**:
     *   Write `/test/unit/ttsSettings.test.ts` and register it inside `/test/test-runner.tsx`.
 7.  **Compilation & Execution Checks**:

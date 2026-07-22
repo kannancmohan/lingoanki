@@ -181,6 +181,11 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
+        if (isFinished) return;
+
+        const isInputActive = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
+        if (isInputActive && e.key !== 'Enter') return;
+
         if(isAnswered) {
             if(e.key === '1') {
                 e.preventDefault();
@@ -194,6 +199,12 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
                 e.preventDefault();
                 handleRateCard(Priority.Low);
             }
+            if(e.key === 's' || e.key === 'S') {
+                e.preventDefault();
+                if (currentQuiz.voiceSettings?.enabled && currentCard) {
+                    speakText(currentCard.back, currentQuiz.voiceSettings);
+                }
+            }
         } else {
             if(e.key === 'Enter') {
                 e.preventDefault();
@@ -203,7 +214,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
     };
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [isAnswered, handleCheckAnswer, handleRateCard]);
+  }, [isAnswered, handleCheckAnswer, handleRateCard, currentQuiz, currentCard, isFinished]);
   
   const mastery = useMemo(() => calculateQuizMastery(currentQuiz), [currentQuiz]);
 
@@ -267,8 +278,8 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
                       id="speak-button"
                       onClick={() => speakText(currentCard.back, currentQuiz.voiceSettings!)}
                       className="p-1 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-full transition-all"
-                      title="Hear pronunciation"
-                      aria-label="Speak translation"
+                      title="Hear pronunciation (Press 'S')"
+                      aria-label="Speak translation (Press 'S')"
                     >
                       <SpeakerIcon className="w-6 h-6" />
                     </button>
