@@ -211,7 +211,7 @@ Homework,die Hausaufgaben
 Luck,das Glück
 Arrival,die Ankunft
 Case(Law/Med),der Fall
-Voice,die Stimme
+Voice(from a person or animal),die Stimme
 Branch,der Ast
 Gate,das Tor
 God,der Gott
@@ -483,7 +483,7 @@ Customer(Male),der Kunde
 Mistake,der Fehler
 Bridge(construction),die Brücke
 flower vase,die Blumenvase
-sound|noise,das Geräusch
+sound|noise(from things|nature|machines etc),das Geräusch
 wallet,die Geldbörse
 valley,das Tal
 fever,das Fieber
