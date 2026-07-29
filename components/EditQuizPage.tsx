@@ -134,6 +134,15 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
       }
   };
 
+  const handleResetWeights = () => {
+    setWeights({
+      [Priority.High]: PRIORITY_WEIGHTS.High * 100,
+      [Priority.Medium]: PRIORITY_WEIGHTS.Medium * 100,
+      [Priority.Low]: PRIORITY_WEIGHTS.Low * 100,
+      [Priority.Unset]: PRIORITY_WEIGHTS.Unset * 100,
+    });
+  };
+
   const totalWeight = Object.values(weights).reduce((sum, w) => sum + (w || 0), 0);
 
   const handleCardChange = useCallback((cardId: string, field: 'front' | 'back', value: string) => {
@@ -322,8 +331,19 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
         <h1 className="text-3xl font-bold text-white mb-6">Edit Quiz</h1>
         
         <div className="mb-8 p-6 bg-slate-700/50 rounded-lg border border-slate-600">
-            <h2 className="text-xl font-semibold text-white mb-2">Custom Priority Weights</h2>
-            <p className="text-sm text-slate-400 mb-4">Define the chance of cards with a certain priority appearing in a study session. The total must be exactly 100%.</p>
+            <div className="flex justify-between items-start mb-2">
+                <div>
+                    <h2 className="text-xl font-semibold text-white mb-2">Custom Priority Weights</h2>
+                    <p className="text-sm text-slate-400 mb-4">Define the chance of cards with a certain priority appearing in a study session. The total must be exactly 100%.</p>
+                </div>
+                <button
+                    type="button"
+                    onClick={handleResetWeights}
+                    className="px-3 py-1.5 text-xs font-semibold text-slate-300 bg-slate-600 hover:bg-slate-500 hover:text-white rounded-md border border-slate-500 transition-colors shrink-0 ml-4"
+                >
+                    Reset to Default
+                </button>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {priorityConfig.map(({ priority, label, color }) => (
                     <div key={priority}>

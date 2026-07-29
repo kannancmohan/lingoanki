@@ -1,10 +1,15 @@
 import { VoiceSettings } from './types';
 
+export const DEFAULT_ITEMS_PER_SESSION = 30;
+export const MIN_ITEMS_PER_SESSION = 1;
+export const FALLBACK_ITEMS_PER_SESSION = 10;
+export const DEFAULT_REPEAT_INCORRECT_CARDS = true;
+
 export const PRIORITY_WEIGHTS = {
-  [ 'High' as const]: 0.4,
-  [ 'Medium' as const]: 0.2,
-  [ 'Low' as const]: 0.05,
-  [ 'Unset' as const]: 0.35,
+  [ 'High' as const]: 0.5,
+  [ 'Medium' as const]: 0.18,
+  [ 'Low' as const]: 0.02,
+  [ 'Unset' as const]: 0.3,
 };
 
 export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
@@ -13,3 +18,4 @@ export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
   rate: 1.0,
   pitch: 1.0,
 };
+

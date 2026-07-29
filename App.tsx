@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Quiz, ImportWarning, Priority } from './types';
+import { DEFAULT_ITEMS_PER_SESSION, DEFAULT_REPEAT_INCORRECT_CARDS, FALLBACK_ITEMS_PER_SESSION, MIN_ITEMS_PER_SESSION } from './constants';
 import { getQuizzes, deleteQuiz as deleteQuizService, resetPriorities as resetPrioritiesService, updateQuiz as updateQuizService } from './services/quizService';
 import { QuizList } from './components/QuizList';
 import { CreateQuizModal } from './components/CreateQuizModal';
@@ -21,8 +22,8 @@ const App: React.FC = () => {
     const [quizForAdvancedSettings, setQuizForAdvancedSettings] = useState<Quiz | null>(null);
     const [importWarnings, setImportWarnings] = useState<ImportWarning[] | null>(null);
 
-    const [sessionSize, setSessionSize] = useState(25);
-    const [reviewMode, setReviewMode] = useState<ReviewMode>('immediate');
+    const [sessionSize, setSessionSize] = useState(DEFAULT_ITEMS_PER_SESSION);
+    const [reviewMode, setReviewMode] = useState<ReviewMode>(DEFAULT_REPEAT_INCORRECT_CARDS ? 'immediate' : 'strict');
 
     const refreshData = useCallback(() => {
         setQuizzes(getQuizzes());
@@ -137,12 +138,12 @@ const App: React.FC = () => {
                     <input
                         id="session-items"
                         type="number"
-                        min="1"
+                        min={MIN_ITEMS_PER_SESSION}
                         value={sessionSize}
                         onChange={(e) => setSessionSize(Number(e.target.value))}
                         onBlur={(e) => {
-                            if (!e.target.value || Number(e.target.value) < 1) {
-                                setSessionSize(10);
+                            if (!e.target.value || Number(e.target.value) < MIN_ITEMS_PER_SESSION) {
+                                setSessionSize(FALLBACK_ITEMS_PER_SESSION);
                             }
                         }}
                         className="bg-slate-700 text-white border border-slate-600 rounded-md px-2 py-1 text-sm w-20 focus:outline-none focus:ring-2 focus:ring-sky-500"
