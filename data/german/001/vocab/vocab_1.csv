@@ -423,7 +423,7 @@ lazy,faul
 throughout|all over|all around - location based,überall
 whole|complete|entire,ganz
 famous|renowned,berühmt
-Patient(masculine) and Patients(plural) - medical patient,der Patient und die Patientin
+Patient(masculine) and Patients(plural) - medical patient,der Patient und die Patienten
 Diet,die Diät
 Emergency call/helpline,der Notruf
 Accident,der Unfall
@@ -516,7 +516,7 @@ project,das Projekt
 competition|contest,der Wettbewerb
 Earth,die Erde
 Singer(M),der Sänger
-disgusting,ekelhaft
+disgusting,eklig
 clever/smart,klug
 quite/calm/silent,ruhig
 smooth/glossy,glatt
@@ -540,3 +540,6 @@ hurry/rush,die Eile
 both,beide
 concert(eg:music concert),das Konzert
 toy,das Spielzeug
+strict,streng
+notebook,das Heft
+animal food|feed,das Futter

@@ -15,7 +15,7 @@ export const PRIORITY_WEIGHTS = {
 export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
   enabled: false,
   language: 'de-DE', // Standard default language for German/English studies
-  rate: 1.0,
+  rate: 0.7,
   pitch: 1.0,
 };
 
