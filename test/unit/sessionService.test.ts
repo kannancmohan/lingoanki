@@ -1,4 +1,4 @@
-import { selectSessionCards } from '../../services/sessionService';
+import { selectSessionCards, formatTime } from '../../services/sessionService';
 import { Card, Priority, Quiz } from '../../types';
 import { expect, TestCase } from '../test-utils';
 
@@ -111,6 +111,16 @@ export const pawrsServiceTests: TestCase[] = [
             // The algorithm should take all 5 available Unset cards (as its weight is higher) and fill the rest with Low cards.
             expect(counts.Unset).toBe(5);
             expect(counts.Low).toBe(3);
+        }
+    },
+    {
+        name: 'Timer Test: Formats seconds into digital timer format (mm:ss / hh:mm:ss)',
+        testFn: () => {
+            expect(formatTime(0)).toBe('00:00');
+            expect(formatTime(5)).toBe('00:05');
+            expect(formatTime(65)).toBe('01:05');
+            expect(formatTime(3600)).toBe('01:00:00');
+            expect(formatTime(3665)).toBe('01:01:05');
         }
     },
 ];

@@ -1,13 +1,15 @@
 import React from 'react';
 import { SessionStats } from '../types';
+import { formatTime } from '../services/sessionService';
 
 interface QuizSummaryProps {
   stats: SessionStats;
+  showTimer?: boolean;
   onFinish: () => void;
   onRestart: () => void;
 }
 
-export const QuizSummary: React.FC<QuizSummaryProps> = ({ stats, onFinish, onRestart }) => {
+export const QuizSummary: React.FC<QuizSummaryProps> = ({ stats, showTimer = true, onFinish, onRestart }) => {
   const score = stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0;
 
   React.useEffect(() => {
@@ -67,19 +69,25 @@ export const QuizSummary: React.FC<QuizSummaryProps> = ({ stats, onFinish, onRes
             </div>
         </div>
 
-        <div className="flex justify-around w-full mb-8">
-            <div className="text-center">
+        <div className={`grid ${showTimer && stats.timeTaken !== undefined ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'} gap-2 sm:gap-3 w-full mb-8`}>
+            <div className="text-center p-2 rounded-xl bg-slate-700/40 border border-slate-700/50">
                 <p className="text-2xl font-bold text-green-400">{stats.correct}</p>
-                <p className="text-sm text-slate-400">Correct</p>
+                <p className="text-xs text-slate-400 font-medium mt-1">Correct</p>
             </div>
-            <div className="text-center">
+            <div className="text-center p-2 rounded-xl bg-slate-700/40 border border-slate-700/50">
                 <p className="text-2xl font-bold text-red-400">{stats.incorrect}</p>
-                <p className="text-sm text-slate-400">Incorrect</p>
+                <p className="text-xs text-slate-400 font-medium mt-1">Incorrect</p>
             </div>
-            <div className="text-center">
-                <p className="text-2xl font-bold">{stats.total}</p>
-                <p className="text-sm text-slate-400">Total</p>
+            <div className="text-center p-2 rounded-xl bg-slate-700/40 border border-slate-700/50">
+                <p className="text-2xl font-bold text-slate-200">{stats.total}</p>
+                <p className="text-xs text-slate-400 font-medium mt-1">Total</p>
             </div>
+            {showTimer && stats.timeTaken !== undefined && (
+                <div className="text-center p-2 rounded-xl bg-slate-700/40 border border-slate-700/50">
+                    <p className="text-2xl font-bold text-sky-400 font-mono">{formatTime(stats.timeTaken)}</p>
+                    <p className="text-xs text-slate-400 font-medium mt-1">Time Taken</p>
+                </div>
+            )}
         </div>
 
         <div className="w-full mt-8 flex flex-col gap-4">

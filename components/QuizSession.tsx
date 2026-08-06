@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Quiz, Card, Priority, SessionStats, VoiceSettings } from '../types';
-import { selectSessionCards, updateCard } from '../services/sessionService';
+import { selectSessionCards, updateCard, formatTime } from '../services/sessionService';
 import { updateQuiz as saveQuiz, calculateQuizMastery } from '../services/quizService';
 import { QuizSummary } from './QuizSummary';
 import { isAnswerCorrect, AnswerDiffViewer } from './AnswerDiffViewer';
-import { SpeakerIcon } from './icons';
+import { SpeakerIcon, ClockIcon } from './icons';
 
 type ReviewMode = 'immediate' | 'strict';
 
@@ -13,6 +13,7 @@ interface QuizSessionProps {
   sessionSize: number;
   onSessionEnd: () => void;
   reviewMode: ReviewMode;
+  showTimer?: boolean;
 }
 
 export const speakText = (text: string, settings: VoiceSettings) => {
@@ -54,7 +55,7 @@ const RatingButton: React.FC<{
 );
 
 
-export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onSessionEnd, reviewMode }) => {
+export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onSessionEnd, reviewMode, showTimer = true }) => {
   const [currentQuiz, setCurrentQuiz] = useState<Quiz>(quiz);
   
   const [sessionQueue, setSessionQueue] = useState<Card[]>([]);
@@ -68,6 +69,17 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
   const [isCorrect, setIsCorrect] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [sessionStats, setSessionStats] = useState<SessionStats>({ correct: 0, incorrect: 0, total: 0 });
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+
+  useEffect(() => {
+    if (isFinished) return;
+
+    const timer = setInterval(() => {
+      setElapsedSeconds(prev => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [isFinished]);
 
   useEffect(() => {
     const cards = selectSessionCards(quiz, sessionSize);
@@ -174,6 +186,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
     setIsAnswered(false);
     setIsCorrect(false);
     setSessionStats({ correct: 0, incorrect: 0, total: 0 });
+    setElapsedSeconds(0);
 
     // Un-finish the session to allow re-render.
     setIsFinished(false);
@@ -219,7 +232,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
   const mastery = useMemo(() => calculateQuizMastery(currentQuiz), [currentQuiz]);
 
   if (isFinished) {
-    return <QuizSummary stats={sessionStats} onFinish={onSessionEnd} onRestart={handleRestartSession} />;
+    return <QuizSummary stats={{ ...sessionStats, timeTaken: elapsedSeconds }} showTimer={showTimer} onFinish={onSessionEnd} onRestart={handleRestartSession} />;
   }
   if (!currentCard) {
     return (
@@ -241,8 +254,16 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
         <div className="mb-4">
             <div className="flex justify-between items-center">
               <button onClick={onSessionEnd} className="text-slate-400 hover:text-white transition-colors">&larr; Back to Quizzes</button>
-              <div className="text-sm text-slate-300">
-                Quiz Mastery: <span className="font-bold text-sky-400">{mastery}%</span>
+              <div className="flex items-center gap-4">
+                {showTimer && (
+                  <div className="flex items-center gap-1.5 text-sm font-mono bg-slate-800 border border-slate-700 px-3 py-1 rounded-full text-sky-300 shadow-sm" title="Elapsed time">
+                    <ClockIcon className="w-4 h-4 text-sky-400" />
+                    <span>{formatTime(elapsedSeconds)}</span>
+                  </div>
+                )}
+                <div className="text-sm text-slate-300">
+                  Quiz Mastery: <span className="font-bold text-sky-400">{mastery}%</span>
+                </div>
               </div>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-2.5 mt-2">

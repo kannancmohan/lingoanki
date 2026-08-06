@@ -24,6 +24,22 @@ const App: React.FC = () => {
 
     const [sessionSize, setSessionSize] = useState(DEFAULT_ITEMS_PER_SESSION);
     const [reviewMode, setReviewMode] = useState<ReviewMode>(DEFAULT_REPEAT_INCORRECT_CARDS ? 'immediate' : 'strict');
+    const [showTimer, setShowTimer] = useState<boolean>(() => {
+        try {
+            const saved = localStorage.getItem('quiz_show_timer');
+            return saved !== null ? JSON.parse(saved) : true;
+        } catch {
+            return true;
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('quiz_show_timer', JSON.stringify(showTimer));
+        } catch {
+            // ignore
+        }
+    }, [showTimer]);
 
     const refreshData = useCallback(() => {
         setQuizzes(getQuizzes());
@@ -156,6 +172,13 @@ const App: React.FC = () => {
                         onChange={(enabled) => setReviewMode(enabled ? 'immediate' : 'strict')}
                     />
                  </div>
+                 <div className="flex items-center gap-2">
+                    <ToggleSwitch 
+                        label="Show session timer"
+                        enabled={showTimer}
+                        onChange={(enabled) => setShowTimer(enabled)}
+                    />
+                 </div>
             </div>
         </div>
         <QuizList quizzes={quizzes} onStartQuiz={handleStartQuiz} onCreateQuiz={() => setView('create')} onOpenAdvancedSettings={handleOpenAdvancedSettings}/>
@@ -171,6 +194,7 @@ const App: React.FC = () => {
                                 sessionSize={sessionSize} 
                                 onSessionEnd={handleEndSession} 
                                 reviewMode={reviewMode}
+                                showTimer={showTimer}
                             />;
                 }
                 return null;

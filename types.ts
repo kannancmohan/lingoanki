@@ -38,6 +38,7 @@ export interface SessionStats {
   correct: number;
   incorrect: number;
   total: number;
+  timeTaken?: number; // In seconds
 }
 
 export interface ImportWarning {

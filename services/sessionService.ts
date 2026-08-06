@@ -86,3 +86,22 @@ export const selectSessionCards = (quiz: Quiz, sessionSize: number): Card[] => {
 export const updateCard = (card: Card, priority: Priority): Card => {
   return { ...card, priority };
 };
+
+/**
+ * Formats seconds into a digital time string (mm:ss or hh:mm:ss).
+ * @param totalSeconds The elapsed time in seconds.
+ * @returns Digital formatted time string (e.g., "00:05", "12:34", "01:02:03").
+ */
+export const formatTime = (totalSeconds: number): string => {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const seconds = safeSeconds % 60;
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  if (hours > 0) {
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+  }
+  return `${pad(minutes)}:${pad(seconds)}`;
+};
