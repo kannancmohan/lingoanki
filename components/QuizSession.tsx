@@ -284,9 +284,15 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
         </div>
         <div className={`bg-slate-800 rounded-2xl shadow-2xl p-8 transition-all duration-300 border ${!isAnswered ? 'border-slate-700' : isCorrect ? 'border-green-500' : 'border-red-500'}`}>
           <div className="text-center">
-            <p className="text-lg text-slate-400">Translate this word:</p>
             <h2 className="text-5xl font-bold my-8 text-white">{currentCard.front}</h2>
           </div>
+
+          {currentQuiz.tips && (
+            <div className="mb-6 bg-sky-950/40 border border-sky-800/60 rounded-lg p-3 text-sm text-sky-200 flex items-start gap-2">
+              <span className="font-semibold shrink-0">Tip:</span>
+              <span>{currentQuiz.tips}</span>
+            </div>
+          )}
 
           {!isAnswered ? (
             <div className="flex gap-2">
@@ -294,7 +300,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                placeholder={`Type the translation...`}
+                placeholder={`Type the answer...`}
                 autoFocus
                 className="flex-grow bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-sky-500 text-lg"
               />

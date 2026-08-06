@@ -32,6 +32,8 @@ export interface Quiz {
   priorityWeights?: Record<Priority, number>;
   group?: string;
   voiceSettings?: VoiceSettings; // New optional setting
+  description?: string;
+  tips?: string;
 }
 
 export interface SessionStats {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Quiz } from '../types';
 import { calculateQuizMastery } from '../services/quizService';
+import { InfoIcon } from './icons';
 
 interface QuizListProps {
   quizzes: Quiz[];
@@ -99,7 +100,19 @@ export const QuizList: React.FC<QuizListProps> = ({ quizzes, onStartQuiz, onCrea
                                                     className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg hover:border-sky-500 hover:bg-slate-700/50 cursor-pointer transition-all duration-200 group flex justify-between items-center"
                                                 >
                                                     <div>
-                                                        <h3 className="text-xl font-bold text-white group-hover:text-sky-400 transition-colors">{quiz.name}</h3>
+                                                        <div className="flex items-center gap-2">
+                                                            <h3 className="text-xl font-bold text-white group-hover:text-sky-400 transition-colors">{quiz.name}</h3>
+                                                            {quiz.description && (
+                                                                <div className="relative group/tooltip inline-flex items-center" onClick={(e) => e.stopPropagation()}>
+                                                                    <InfoIcon className="h-4 w-4 text-slate-400 hover:text-sky-400 transition-colors cursor-pointer shrink-0" />
+                                                                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover/tooltip:block w-64 p-3 bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg shadow-xl z-30 pointer-events-none">
+                                                                        <div className="font-semibold text-sky-400 mb-1">Description</div>
+                                                                        <p className="whitespace-normal font-normal text-slate-300">{quiz.description}</p>
+                                                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                         <p className="text-slate-400 text-sm mt-1">{quiz.cards.length} cards</p>
                                                         <div className="flex items-center gap-2 mt-3">
                                                           <div className="w-full bg-slate-700 rounded-full h-2 max-w-xs">

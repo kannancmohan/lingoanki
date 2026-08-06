@@ -26,6 +26,8 @@ const LANGUAGE_SAMPLE_PHRASES: Record<string, string> = {
 export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCancel }) => {
   const [quizName, setQuizName] = useState(quiz.name);
   const [selectedGroup, setSelectedGroup] = useState(quiz.group || 'default');
+  const [description, setDescription] = useState(quiz.description || '');
+  const [tips, setTips] = useState(quiz.tips || '');
   const [cards, setCards] = useState<Card[]>(quiz.cards);
   const [modalError, setModalError] = useState<{ title: string; message: string; } | null>(null);
   const [importResult, setImportResult] = useState<{ addedCount: number; skipped: ImportWarning[] } | null>(null);
@@ -293,6 +295,8 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
     const updatedQuiz: Quiz = {
       ...quiz,
       name: quizName.trim(),
+      description: description.trim(),
+      tips: tips.trim(),
       cards: cards,
       priorityWeights: normalizedWeights,
       group: selectedGroup,
@@ -331,6 +335,23 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
       <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700">
         <h1 className="text-3xl font-bold text-white mb-6">Edit Quiz</h1>
         
+        <div className="mb-6">
+            <label htmlFor="quizName" className="block text-sm font-medium text-slate-300 mb-2">Quiz Name</label>
+            <input
+              type="text"
+              id="quizName"
+              value={quizName}
+              onChange={(e) => setQuizName(e.target.value)}
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+              placeholder="e.g., Common Nouns"
+              required
+            />
+        </div>
+
+        <div className="mb-6">
+            <GroupSelector selectedGroup={selectedGroup} onChange={setSelectedGroup} />
+        </div>
+
         {/* Advance settings Accordion */}
         <div className="mb-8 bg-slate-700/30 rounded-xl border border-slate-700 overflow-hidden">
           <button
@@ -345,7 +366,7 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
                 Advance settings
               </h2>
               <p className="text-sm text-slate-400 mt-0.5">
-                Configure priority weight distribution and voice pronunciation settings
+                Configure description, tips, priority weight distribution and voice settings
               </p>
             </div>
             <div className="flex items-center gap-2 text-slate-400 shrink-0 ml-4">
@@ -358,6 +379,40 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
 
           {isAdvanceSettingsOpen && (
             <div className="p-6 space-y-6 border-t border-slate-700/50 bg-slate-800/40">
+              {/* Quiz Description & Tips Section */}
+              <div className="p-6 bg-slate-700/50 rounded-lg border border-slate-600 space-y-4">
+                <div>
+                  <h3 className="text-xl font-semibold text-white mb-1">Quiz Info & Guidance</h3>
+                  <p className="text-sm text-slate-400">Add an optional description and study tips for users taking this quiz.</p>
+                </div>
+                <div>
+                  <label htmlFor="quizDescription" className="block text-sm font-medium text-slate-300 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    id="quizDescription"
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-sky-500 text-sm"
+                    placeholder="Enter quiz description..."
+                  />
+                </div>
+                <div>
+                  <label htmlFor="quizTips" className="block text-sm font-medium text-slate-300 mb-1">
+                    Tips
+                  </label>
+                  <textarea
+                    id="quizTips"
+                    rows={2}
+                    value={tips}
+                    onChange={(e) => setTips(e.target.value)}
+                    className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-sky-500 text-sm"
+                    placeholder="eg use comma to separate the different verb conjugation"
+                  />
+                </div>
+              </div>
+
               {/* Custom Priority Weights Section */}
               <div className="p-6 bg-slate-700/50 rounded-lg border border-slate-600">
                 <div className="flex justify-between items-start mb-2">
@@ -533,23 +588,6 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
               </div>
             </div>
           )}
-        </div>
-
-        <div className="mb-6">
-            <label htmlFor="quizName" className="block text-sm font-medium text-slate-300 mb-2">Quiz Name</label>
-            <input
-              type="text"
-              id="quizName"
-              value={quizName}
-              onChange={(e) => setQuizName(e.target.value)}
-              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
-              placeholder="e.g., Common Nouns"
-              required
-            />
-        </div>
-
-        <div className="mb-6">
-            <GroupSelector selectedGroup={selectedGroup} onChange={setSelectedGroup} />
         </div>
         
         <h2 className="text-xl font-semibold text-white mb-4">Cards ({cards.length})</h2>
