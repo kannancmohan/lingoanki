@@ -1,11 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { createQuiz } from '../services/quizService';
-import { ImportWarning } from '../types';
+import { ImportWarning, Quiz } from '../types';
 import { GroupSelector } from './GroupSelector';
 
 interface CreateQuizModalProps {
   onClose: () => void;
-  onQuizCreated: (warnings: ImportWarning[]) => void;
+  onQuizCreated: (warnings: ImportWarning[], newQuiz?: Quiz) => void;
 }
 
 export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ onClose, onQuizCreated }) => {
@@ -21,26 +21,32 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ onClose, onQui
     }
   };
 
+  const handleRemoveFile = () => {
+    setCsvFile(null);
+  };
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quizName || !csvFile) {
-      setError('Please provide a quiz name and a CSV file.');
+    if (!quizName.trim()) {
+      setError('Please provide a quiz name.');
       return;
     }
     setError(null);
     setIsLoading(true);
 
     try {
-      const fileContent = await csvFile.text();
-      const { warnings } = createQuiz(quizName, fileContent, selectedGroup);
-      onQuizCreated(warnings);
-      onClose();
+      let fileContent: string | undefined = undefined;
+      if (csvFile) {
+        fileContent = await csvFile.text();
+      }
+      const { newQuiz, warnings } = createQuiz(quizName, fileContent, selectedGroup);
+      onQuizCreated(warnings, newQuiz);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred.');
     } finally {
       setIsLoading(false);
     }
-  }, [quizName, csvFile, selectedGroup, onQuizCreated, onClose]);
+  }, [quizName, csvFile, selectedGroup, onQuizCreated]);
 
   return (
     <div className="fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -48,7 +54,9 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ onClose, onQui
         <h2 className="text-2xl font-bold text-white mb-6">Create New Quiz</h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label htmlFor="quizName" className="block text-sm font-medium text-slate-300 mb-2">Quiz Name</label>
+            <label htmlFor="quizName" className="block text-sm font-medium text-slate-300 mb-2">
+              Quiz Name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               id="quizName"
@@ -60,24 +68,45 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ onClose, onQui
             />
           </div>
           <div className="mb-4">
-            <GroupSelector selectedGroup={selectedGroup} onChange={setSelectedGroup} />
+            <GroupSelector
+              selectedGroup={selectedGroup}
+              onChange={setSelectedGroup}
+              label={
+                <>
+                  Group <span className="text-red-500">*</span>
+                </>
+              }
+            />
           </div>
           <div className="mb-6">
-            <label htmlFor="csvFile" className="block text-sm font-medium text-slate-300 mb-2">Words (CSV file)</label>
-            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-600 border-dashed rounded-md">
+            <div className="flex justify-between items-center mb-2">
+              <label htmlFor="csvFile" className="block text-sm font-medium text-slate-300">
+                Words (CSV file)
+              </label>
+              {csvFile && (
+                <button
+                  type="button"
+                  onClick={handleRemoveFile}
+                  className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Remove file
+                </button>
+              )}
+            </div>
+            <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-600 border-dashed rounded-md hover:border-slate-500 transition-colors">
                 <div className="space-y-1 text-center">
                     <svg className="mx-auto h-12 w-12 text-slate-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <div className="flex text-sm text-slate-400">
+                    <div className="flex text-sm text-slate-400 justify-center">
                         <label htmlFor="csvFile" className="relative cursor-pointer bg-slate-800 rounded-md font-medium text-sky-400 hover:text-sky-300 focus-within:outline-none">
-                            <span>Upload a file</span>
-                            <input id="csvFile" name="csvFile" type="file" className="sr-only" accept=".csv, text/csv" onChange={handleFileChange} required/>
+                            <span>{csvFile ? 'Change CSV file' : 'Upload a CSV file'}</span>
+                            <input id="csvFile" name="csvFile" type="file" className="sr-only" accept=".csv, text/csv" onChange={handleFileChange} />
                         </label>
-                        <p className="pl-1">or drag and drop</p>
+                        {!csvFile && <p className="pl-1">or drag and drop</p>}
                     </div>
-                    <p className="text-xs text-slate-500">CSV up to 10MB. Format: `word,translation`</p>
-                    {csvFile && <p className="text-sm text-green-400 pt-2">{csvFile.name}</p>}
+                    <p className="text-xs text-slate-500">Format: `word,translation`. You can also add cards manually later.</p>
+                    {csvFile && <p className="text-sm text-green-400 font-medium pt-2">Selected: {csvFile.name}</p>}
                 </div>
             </div>
           </div>
@@ -88,7 +117,7 @@ export const CreateQuizModal: React.FC<CreateQuizModalProps> = ({ onClose, onQui
             <button type="button" onClick={onClose} disabled={isLoading} className="px-6 py-2 bg-transparent border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50">
                 Cancel
             </button>
-            <button type="submit" disabled={isLoading || !quizName || !csvFile} className="px-6 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-sky-500 transition-all duration-200 shadow-lg shadow-sky-600/30 transform hover:-translate-y-0.5 disabled:bg-slate-600 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed">
+            <button type="submit" disabled={isLoading || !quizName.trim()} className="px-6 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800 focus:ring-sky-500 transition-all duration-200 shadow-lg shadow-sky-600/30 transform hover:-translate-y-0.5 disabled:bg-slate-600 disabled:shadow-none disabled:transform-none disabled:cursor-not-allowed">
               {isLoading ? 'Creating...' : 'Create Quiz'}
             </button>
           </div>

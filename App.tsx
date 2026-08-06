@@ -63,11 +63,16 @@ const App: React.FC = () => {
         refreshData();
     };
 
-    const handleQuizCreated = (warnings: ImportWarning[]) => {
-        setView('list');
+    const handleQuizCreated = (warnings: ImportWarning[], newQuiz?: Quiz) => {
         refreshData();
         if (warnings.length > 0) {
             setImportWarnings(warnings);
+        }
+        if (newQuiz) {
+            setActiveQuiz(newQuiz);
+            setView('edit');
+        } else {
+            setView('list');
         }
     };
     

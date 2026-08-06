@@ -4,7 +4,7 @@ import { getGroups, addGroup } from '../services/quizService';
 interface GroupSelectorProps {
   selectedGroup: string;
   onChange: (group: string) => void;
-  label?: string;
+  label?: React.ReactNode;
 }
 
 export const GroupSelector: React.FC<GroupSelectorProps> = ({ selectedGroup, onChange, label = 'Group' }) => {

@@ -47,7 +47,7 @@ export const getQuiz = (quizId: string): Quiz | undefined => {
   return quizzes.find(q => q.id === quizId);
 };
 
-export const createQuiz = (name: string, csvData: string, group?: string): CreateQuizResult => {
+export const createQuiz = (name: string, csvData?: string, group?: string): CreateQuizResult => {
     const quizzes = getQuizzes();
     const normalizedNewName = name.trim().toLowerCase();
 
@@ -57,69 +57,72 @@ export const createQuiz = (name: string, csvData: string, group?: string): Creat
 
     const quizId = `quiz_${Date.now()}`;
 
-    let content = csvData;
-    if (content.startsWith('﻿')) {
-        content = content.substring(1);
-    }
-
     const warnings: ImportWarning[] = [];
     const createdCards: Card[] = [];
-    const lines = content.split(/\r?\n/);
-    const seenFronts = new Set<string>();
 
-    lines.forEach((line, index) => {
-        const lineNumber = index + 1;
-        const trimmedLine = line.trim();
-
-        if (!trimmedLine) {
-            return; // Silently ignore empty lines
+    if (csvData && csvData.trim()) {
+        let content = csvData;
+        if (content.startsWith('﻿') || content.startsWith('\uFEFF')) {
+            content = content.substring(1);
         }
 
-        const cleanField = (field: string | undefined): string => {
-            if (!field) return '';
-            let cleaned = field.trim();
-            if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-                cleaned = cleaned.substring(1, cleaned.length - 1);
+        const lines = content.split(/\r?\n/);
+        const seenFronts = new Set<string>();
+
+        lines.forEach((line, index) => {
+            const lineNumber = index + 1;
+            const trimmedLine = line.trim();
+
+            if (!trimmedLine) {
+                return; // Silently ignore empty lines
             }
-            return cleaned.replace(/\s+/g, ' ').trim();
-        };
 
-        if (!trimmedLine.includes(',')) {
-            warnings.push({ line: lineNumber, content: trimmedLine, reason: 'Line does not contain a comma separator.' });
-            return;
-        }
+            const cleanField = (field: string | undefined): string => {
+                if (!field) return '';
+                let cleaned = field.trim();
+                if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+                    cleaned = cleaned.substring(1, cleaned.length - 1);
+                }
+                return cleaned.replace(/\s+/g, ' ').trim();
+            };
 
-        const parts = trimmedLine.split(',');
-        const front = cleanField(parts[0]);
-        const back = cleanField(parts.slice(1).join(','));
+            if (!trimmedLine.includes(',')) {
+                warnings.push({ line: lineNumber, content: trimmedLine, reason: 'Line does not contain a comma separator.' });
+                return;
+            }
 
-        if (!front || !back) {
-            warnings.push({ line: lineNumber, content: trimmedLine, reason: 'One or more fields are empty.' });
-            return;
-        }
+            const parts = trimmedLine.split(',');
+            const front = cleanField(parts[0]);
+            const back = cleanField(parts.slice(1).join(','));
 
-        const normalizedFront = front.trim().toLowerCase();
-        if (seenFronts.has(normalizedFront)) {
-            warnings.push({ line: lineNumber, content: trimmedLine, reason: `Duplicate entry for "${front}".` });
-            return;
-        }
-        
-        seenFronts.add(normalizedFront);
+            if (!front || !back) {
+                warnings.push({ line: lineNumber, content: trimmedLine, reason: 'One or more fields are empty.' });
+                return;
+            }
 
-        createdCards.push({
-            id: `card_${quizId}_${index}`,
-            quizId,
-            front,
-            back,
-            priority: Priority.Unset,
-            timesSeen: 0,
-            timesCorrect: 0,
-            timesIncorrect: 0,
+            const normalizedFront = front.trim().toLowerCase();
+            if (seenFronts.has(normalizedFront)) {
+                warnings.push({ line: lineNumber, content: trimmedLine, reason: `Duplicate entry for "${front}".` });
+                return;
+            }
+            
+            seenFronts.add(normalizedFront);
+
+            createdCards.push({
+                id: `card_${quizId}_${index}`,
+                quizId,
+                front,
+                back,
+                priority: Priority.Unset,
+                timesSeen: 0,
+                timesCorrect: 0,
+                timesIncorrect: 0,
+            });
         });
-    });
-    
-    if (createdCards.length === 0) {
-        throw new Error("CSV file is empty or contains no valid lines. Please ensure it has 'word,translation' format per line.");
+        
+        if (createdCards.length === 0) {
+            throw new Error("CSV file is empty or contains no valid lines. Please ensure it has 'word,translation' format per line.");
+        }
     }
 
     const newQuiz: Quiz = {

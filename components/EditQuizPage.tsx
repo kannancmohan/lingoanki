@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Quiz, Card, ImportWarning, Priority, VoiceSettings } from '../types';
 import { createNewCard } from '../services/quizService';
 import { GroupSelector } from './GroupSelector';
-import { TrashIcon, PlusIcon, UploadIcon, SpeakerIcon } from './icons';
+import { TrashIcon, PlusIcon, UploadIcon, SpeakerIcon, ChevronDownIcon } from './icons';
 import { ErrorModal } from './ErrorModal';
 import { ImportResultModal } from './ImportResultModal';
 import { PRIORITY_WEIGHTS, DEFAULT_VOICE_SETTINGS } from '../constants';
@@ -29,6 +29,7 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
   const [cards, setCards] = useState<Card[]>(quiz.cards);
   const [modalError, setModalError] = useState<{ title: string; message: string; } | null>(null);
   const [importResult, setImportResult] = useState<{ addedCount: number; skipped: ImportWarning[] } | null>(null);
+  const [isAdvanceSettingsOpen, setIsAdvanceSettingsOpen] = useState(false);
 
   const cardInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
   const [newlyAddedCardId, setNewlyAddedCardId] = useState<string | null>(null);
@@ -330,177 +331,208 @@ export const EditQuizPage: React.FC<EditQuizPageProps> = ({ quiz, onSave, onCanc
       <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700">
         <h1 className="text-3xl font-bold text-white mb-6">Edit Quiz</h1>
         
-        <div className="mb-8 p-6 bg-slate-700/50 rounded-lg border border-slate-600">
-            <div className="flex justify-between items-start mb-2">
-                <div>
-                    <h2 className="text-xl font-semibold text-white mb-2">Custom Priority Weights</h2>
+        {/* Advance settings Accordion */}
+        <div className="mb-8 bg-slate-700/30 rounded-xl border border-slate-700 overflow-hidden">
+          <button
+            type="button"
+            id="advance-settings-accordion-btn"
+            onClick={() => setIsAdvanceSettingsOpen(prev => !prev)}
+            className="w-full flex items-center justify-between p-5 text-left bg-slate-700/50 hover:bg-slate-700 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500"
+            aria-expanded={isAdvanceSettingsOpen}
+          >
+            <div>
+              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                Advance settings
+              </h2>
+              <p className="text-sm text-slate-400 mt-0.5">
+                Configure priority weight distribution and voice pronunciation settings
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-slate-400 shrink-0 ml-4">
+              <span className="text-xs font-medium uppercase tracking-wider bg-slate-800 px-2.5 py-1 rounded-full text-slate-300 border border-slate-600">
+                {isAdvanceSettingsOpen ? 'Hide' : 'Show'}
+              </span>
+              <ChevronDownIcon className={`w-5 h-5 transition-transform duration-200 ${isAdvanceSettingsOpen ? 'rotate-180' : ''}`} />
+            </div>
+          </button>
+
+          {isAdvanceSettingsOpen && (
+            <div className="p-6 space-y-6 border-t border-slate-700/50 bg-slate-800/40">
+              {/* Custom Priority Weights Section */}
+              <div className="p-6 bg-slate-700/50 rounded-lg border border-slate-600">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-xl font-semibold text-white mb-2">Custom Priority Weights</h3>
                     <p className="text-sm text-slate-400 mb-4">Define the chance of cards with a certain priority appearing in a study session. The total must be exactly 100%.</p>
-                </div>
-                <button
+                  </div>
+                  <button
                     type="button"
                     onClick={handleResetWeights}
                     className="px-3 py-1.5 text-xs font-semibold text-slate-300 bg-slate-600 hover:bg-slate-500 hover:text-white rounded-md border border-slate-500 transition-colors shrink-0 ml-4"
-                >
+                  >
                     Reset to Default
-                </button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {priorityConfig.map(({ priority, label, color }) => (
-                    <div key={priority}>
-                        <label htmlFor={`weight-${priority}`} className={`block text-sm font-medium mb-1 ${color}`}>{label}</label>
-                        <div className="relative">
-                            <input
-                                type="number"
-                                id={`weight-${priority}`}
-                                value={weights[priority]}
-                                onChange={(e) => handleWeightChange(priority, e.target.value)}
-                                min="0" max="100" step="1"
-                                className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-sky-500 pr-8"
-                            />
-                            <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
-             <div className="mt-4 text-right">
-                <span className={`font-bold ${totalWeight === 100 ? 'text-green-400' : 'text-red-400'}`}>
-                    Total: {totalWeight}%
-                </span>
-                {totalWeight !== 100 && <p className="text-xs text-red-400 mt-1">Total must be 100% to save.</p>}
-            </div>
-        </div>
-
-        {/* Voice & Pronunciation Section */}
-        <div id="voice-settings-card" className="mb-8 p-6 bg-slate-700/50 rounded-lg border border-slate-600">
-            <div className="flex items-center justify-between mb-4">
-                <div>
-                    <h2 className="text-xl font-semibold text-white">Voice & Pronunciation</h2>
-                    <p className="text-sm text-slate-400">Configure text-to-speech settings to hear correct pronunciations during your session.</p>
+                  </button>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {priorityConfig.map(({ priority, label, color }) => (
+                    <div key={priority}>
+                      <label htmlFor={`weight-${priority}`} className={`block text-sm font-medium mb-1 ${color}`}>{label}</label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          id={`weight-${priority}`}
+                          value={weights[priority]}
+                          onChange={(e) => handleWeightChange(priority, e.target.value)}
+                          min="0" max="100" step="1"
+                          className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-sky-500 pr-8"
+                        />
+                        <span className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 text-right">
+                  <span className={`font-bold ${totalWeight === 100 ? 'text-green-400' : 'text-red-400'}`}>
+                    Total: {totalWeight}%
+                  </span>
+                  {totalWeight !== 100 && <p className="text-xs text-red-400 mt-1">Total must be 100% to save.</p>}
+                </div>
+              </div>
+
+              {/* Voice & Pronunciation Section */}
+              <div id="voice-settings-card" className="p-6 bg-slate-700/50 rounded-lg border border-slate-600">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">Voice & Pronunciation</h3>
+                    <p className="text-sm text-slate-400">Configure text-to-speech settings to hear correct pronunciations during your session.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
                     <input 
-                        type="checkbox" 
-                        id="enable-voice"
-                        checked={voiceSettings.enabled} 
-                        onChange={(e) => handleToggleVoice(e.target.checked)}
-                        className="sr-only peer"
+                      type="checkbox" 
+                      id="enable-voice"
+                      checked={voiceSettings.enabled} 
+                      onChange={(e) => handleToggleVoice(e.target.checked)}
+                      className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
-                </label>
-            </div>
+                  </label>
+                </div>
 
-            {voiceSettings.enabled && (
-                <div className="space-y-4 pt-4 border-t border-slate-600/50">
+                {voiceSettings.enabled && (
+                  <div className="space-y-4 pt-4 border-t border-slate-600/50">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Language Select */}
-                        <div>
-                            <label htmlFor="voice-language" className="block text-sm font-medium text-slate-300 mb-1">Target Language</label>
-                            <select
-                                id="voice-language"
-                                value={voiceSettings.language}
-                                onChange={(e) => handleLanguageChange(e.target.value)}
-                                className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
-                            >
-                                <option value="de-DE">German (de-DE)</option>
-                                <option value="en-US">English (en-US)</option>
-                                <option value="es-ES">Spanish (es-ES)</option>
-                                <option value="fr-FR">French (fr-FR)</option>
-                                <option value="it-IT">Italian (it-IT)</option>
-                                <option value="ja-JP">Japanese (ja-JP)</option>
-                            </select>
-                        </div>
+                      {/* Language Select */}
+                      <div>
+                        <label htmlFor="voice-language" className="block text-sm font-medium text-slate-300 mb-1">Target Language</label>
+                        <select
+                          id="voice-language"
+                          value={voiceSettings.language}
+                          onChange={(e) => handleLanguageChange(e.target.value)}
+                          className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                        >
+                          <option value="de-DE">German (de-DE)</option>
+                          <option value="en-US">English (en-US)</option>
+                          <option value="es-ES">Spanish (es-ES)</option>
+                          <option value="fr-FR">French (fr-FR)</option>
+                          <option value="it-IT">Italian (it-IT)</option>
+                          <option value="ja-JP">Japanese (ja-JP)</option>
+                        </select>
+                      </div>
 
-                        {/* Voice Select */}
-                        <div>
-                            <label htmlFor="voice-speaker" className="block text-sm font-medium text-slate-300 mb-1">Speaker Voice</label>
-                            <select
-                                id="voice-speaker"
-                                value={voiceSettings.voiceURI || ''}
-                                onChange={(e) => handleVoiceChange(e.target.value)}
-                                className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
-                            >
-                                {filteredVoices.map(v => (
-                                    <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>
-                                ))}
-                                {filteredVoices.length === 0 && <option value="">No voices available for language</option>}
-                            </select>
-                        </div>
+                      {/* Voice Select */}
+                      <div>
+                        <label htmlFor="voice-speaker" className="block text-sm font-medium text-slate-300 mb-1">Speaker Voice</label>
+                        <select
+                          id="voice-speaker"
+                          value={voiceSettings.voiceURI || ''}
+                          onChange={(e) => handleVoiceChange(e.target.value)}
+                          className="w-full bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                        >
+                          {filteredVoices.map(v => (
+                            <option key={v.voiceURI} value={v.voiceURI}>{v.name} ({v.lang})</option>
+                          ))}
+                          {filteredVoices.length === 0 && <option value="">No voices available for language</option>}
+                        </select>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                        {/* Rate Slider */}
-                        <div>
-                            <div className="flex justify-between text-sm font-medium text-slate-300 mb-1">
-                                <label htmlFor="voice-rate">Speech Rate (Speed)</label>
-                                <span className="text-sky-400">{voiceSettings.rate.toFixed(1)}x</span>
-                            </div>
-                            <input 
-                                id="voice-rate"
-                                type="range" 
-                                min="0.5" 
-                                max="2.0" 
-                                step="0.1" 
-                                value={voiceSettings.rate}
-                                onChange={(e) => handleVoiceSettingsSlider('rate', parseFloat(e.target.value))}
-                                className="w-full h-1.5 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-500"
-                            />
+                      {/* Rate Slider */}
+                      <div>
+                        <div className="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                          <label htmlFor="voice-rate">Speech Rate (Speed)</label>
+                          <span className="text-sky-400">{voiceSettings.rate.toFixed(1)}x</span>
                         </div>
+                        <input 
+                          id="voice-rate"
+                          type="range" 
+                          min="0.5" 
+                          max="2.0" 
+                          step="0.1" 
+                          value={voiceSettings.rate}
+                          onChange={(e) => handleVoiceSettingsSlider('rate', parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                        />
+                      </div>
 
-                        {/* Pitch Slider */}
-                        <div>
-                            <div className="flex justify-between text-sm font-medium text-slate-300 mb-1">
-                                <label htmlFor="voice-pitch">Speech Pitch (Tone)</label>
-                                <span className="text-sky-400">{voiceSettings.pitch.toFixed(1)}</span>
-                            </div>
-                            <input 
-                                id="voice-pitch"
-                                type="range" 
-                                min="0.5" 
-                                max="2.0" 
-                                step="0.1" 
-                                value={voiceSettings.pitch}
-                                onChange={(e) => handleVoiceSettingsSlider('pitch', parseFloat(e.target.value))}
-                                className="w-full h-1.5 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-500"
-                            />
+                      {/* Pitch Slider */}
+                      <div>
+                        <div className="flex justify-between text-sm font-medium text-slate-300 mb-1">
+                          <label htmlFor="voice-pitch">Speech Pitch (Tone)</label>
+                          <span className="text-sky-400">{voiceSettings.pitch.toFixed(1)}</span>
                         </div>
+                        <input 
+                          id="voice-pitch"
+                          type="range" 
+                          min="0.5" 
+                          max="2.0" 
+                          step="0.1" 
+                          value={voiceSettings.pitch}
+                          onChange={(e) => handleVoiceSettingsSlider('pitch', parseFloat(e.target.value))}
+                          className="w-full h-1.5 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-sky-500"
+                        />
+                      </div>
                     </div>
 
                     {/* Live Test Pronunciation Section */}
                     <div className="pt-4 border-t border-slate-600/50 flex flex-col sm:flex-row sm:items-end gap-4">
-                        <div className="flex-1">
-                            <label htmlFor="test-phrase-input" className="block text-sm font-medium text-slate-300 mb-1">Test Pronunciation</label>
-                            <div className="flex gap-2">
-                                <input 
-                                    id="test-phrase-input"
-                                    type="text"
-                                    value={testPhrase}
-                                    onChange={(e) => setTestPhrase(e.target.value)}
-                                    className="flex-1 bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
-                                    placeholder="Type a word or sentence to test..."
-                                />
-                                <button
-                                    id="test-pronunciation-btn"
-                                    type="button"
-                                    onClick={() => speakText(testPhrase, voiceSettings)}
-                                    className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-md flex items-center gap-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-800"
-                                    aria-label="Test speaker pronunciation"
-                                >
-                                    <SpeakerIcon className="w-5 h-5" />
-                                    Test Voice
-                                </button>
-                            </div>
-                        </div>
-                        <button
-                            id="reset-voice-settings-btn"
+                      <div className="flex-1">
+                        <label htmlFor="test-phrase-input" className="block text-sm font-medium text-slate-300 mb-1">Test Pronunciation</label>
+                        <div className="flex gap-2">
+                          <input 
+                            id="test-phrase-input"
+                            type="text"
+                            value={testPhrase}
+                            onChange={(e) => setTestPhrase(e.target.value)}
+                            className="flex-1 bg-slate-600 border border-slate-500 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-1 focus:ring-sky-500"
+                            placeholder="Type a word or sentence to test..."
+                          />
+                          <button
+                            id="test-pronunciation-btn"
                             type="button"
-                            onClick={handleResetVoiceSettings}
-                            className="px-4 py-2 bg-slate-600/50 hover:bg-slate-600 border border-slate-500 text-slate-300 hover:text-white rounded-md text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:self-end h-[38px]"
-                        >
-                            Reset to Defaults
-                        </button>
+                            onClick={() => speakText(testPhrase, voiceSettings)}
+                            className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-md flex items-center gap-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-800"
+                            aria-label="Test speaker pronunciation"
+                          >
+                            <SpeakerIcon className="w-5 h-5" />
+                            Test Voice
+                          </button>
+                        </div>
+                      </div>
+                      <button
+                        id="reset-voice-settings-btn"
+                        type="button"
+                        onClick={handleResetVoiceSettings}
+                        className="px-4 py-2 bg-slate-600/50 hover:bg-slate-600 border border-slate-500 text-slate-300 hover:text-white rounded-md text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 focus:ring-offset-slate-800 sm:self-end h-[38px]"
+                      >
+                        Reset to Defaults
+                      </button>
                     </div>
-                </div>
-            )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mb-6">

@@ -127,5 +127,21 @@ export const quizFlowTests: TestCase[] = [
             if (!updatedReloadedQuiz) throw new Error("Quiz should be defined");
             expect(updatedReloadedQuiz.group).toBe(anotherGroup);
         }
+    },
+    {
+        name: 'Integration Test: Create quiz without CSV (optional CSV)',
+        testFn: async () => {
+            const quizName = "Empty Quiz Test";
+            const { newQuiz, warnings } = createQuiz(quizName);
+
+            expect(newQuiz).toBeDefined();
+            expect(newQuiz.name).toBe(quizName);
+            expect(newQuiz.cards).toHaveLength(0);
+            expect(warnings).toHaveLength(0);
+
+            const reloadedQuiz = getQuizzes().find(q => q.id === newQuiz.id);
+            expect(reloadedQuiz).toBeDefined();
+            expect(reloadedQuiz?.cards).toHaveLength(0);
+        }
     }
 ];

@@ -231,6 +231,18 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
   
   const mastery = useMemo(() => calculateQuizMastery(currentQuiz), [currentQuiz]);
 
+  if (currentQuiz.cards.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-white">
+        <div className="w-full max-w-2xl bg-slate-800 rounded-2xl p-8 text-center border border-slate-700">
+          <h2 className="text-2xl font-bold text-sky-400">No Cards in Quiz</h2>
+          <p className="text-slate-300 mt-2">This quiz does not have any flashcards yet. Add cards manually in Edit Quiz or import a CSV file to get started.</p>
+          <button onClick={onSessionEnd} className="mt-6 bg-sky-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-sky-500 transition-colors">Go Back</button>
+        </div>
+      </div>
+    );
+  }
+
   if (isFinished) {
     return <QuizSummary stats={{ ...sessionStats, timeTaken: elapsedSeconds }} showTimer={showTimer} onFinish={onSessionEnd} onRestart={handleRestartSession} />;
   }
