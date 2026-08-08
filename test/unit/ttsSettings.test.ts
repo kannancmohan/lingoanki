@@ -10,7 +10,7 @@ export const ttsSettingsTests: TestCase[] = [
     testFn: () => {
       expect(DEFAULT_VOICE_SETTINGS.enabled).toBe(false);
       expect(DEFAULT_VOICE_SETTINGS.language).toBe('de-DE');
-      expect(DEFAULT_VOICE_SETTINGS.rate).toBe(1.0);
+      expect(DEFAULT_VOICE_SETTINGS.rate).toBe(0.7);
       expect(DEFAULT_VOICE_SETTINGS.pitch).toBe(1.0);
     }
   },
@@ -144,7 +144,7 @@ export const ttsSettingsTests: TestCase[] = [
       };
 
       expect(resetSettings.language).toBe('de-DE');
-      expect(resetSettings.rate).toBe(1.0);
+      expect(resetSettings.rate).toBe(0.7);
       expect(resetSettings.pitch).toBe(1.0);
       expect(resetSettings.voiceURI).toBeUndefined();
       expect(resetSettings.enabled).toBe(true);

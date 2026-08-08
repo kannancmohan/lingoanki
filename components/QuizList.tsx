@@ -1,23 +1,70 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Quiz } from '../types';
-import { calculateQuizMastery } from '../services/quizService';
-import { InfoIcon } from './icons';
+import { calculateQuizMastery, isDefaultGroup, editGroup, deleteGroup } from '../services/quizService';
+import { InfoIcon, PencilIcon, TrashIcon } from './icons';
 
 interface QuizListProps {
   quizzes: Quiz[];
   onStartQuiz: (quizId: string) => void;
   onCreateQuiz: () => void;
   onOpenAdvancedSettings: (quizId: string) => void;
+  onRefreshData?: () => void;
 }
 
-export const QuizList: React.FC<QuizListProps> = ({ quizzes, onStartQuiz, onCreateQuiz, onOpenAdvancedSettings }) => {
+export const QuizList: React.FC<QuizListProps> = ({ quizzes, onStartQuiz, onCreateQuiz, onOpenAdvancedSettings, onRefreshData }) => {
     const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>({});
+
+    const [editingGroupName, setEditingGroupName] = useState<string | null>(null);
+    const [editNewName, setEditNewName] = useState('');
+    const [editError, setEditError] = useState<string | null>(null);
+
+    const [deletingGroupName, setDeletingGroupName] = useState<string | null>(null);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     const toggleGroup = (groupName: string) => {
         setExpandedGroups(prev => ({
             ...prev,
             [groupName]: !prev[groupName]
         }));
+    };
+
+    const handleOpenEditGroup = (groupName: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isDefaultGroup(groupName)) return;
+        setEditingGroupName(groupName);
+        setEditNewName(groupName);
+        setEditError(null);
+    };
+
+    const handleSaveEditGroup = () => {
+        if (!editingGroupName) return;
+        const result = editGroup(editingGroupName, editNewName);
+        if (!result.success) {
+            setEditError(result.error || 'Failed to rename group.');
+            return;
+        }
+        setEditingGroupName(null);
+        setEditError(null);
+        if (onRefreshData) onRefreshData();
+    };
+
+    const handleOpenDeleteGroup = (groupName: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (isDefaultGroup(groupName)) return;
+        setDeletingGroupName(groupName);
+        setDeleteError(null);
+    };
+
+    const handleConfirmDeleteGroup = () => {
+        if (!deletingGroupName) return;
+        const result = deleteGroup(deletingGroupName);
+        if (!result.success) {
+            setDeleteError(result.error || 'Failed to delete group.');
+            return;
+        }
+        setDeletingGroupName(null);
+        setDeleteError(null);
+        if (onRefreshData) onRefreshData();
     };
 
     // Group quizzes
@@ -72,21 +119,47 @@ export const QuizList: React.FC<QuizListProps> = ({ quizzes, onStartQuiz, onCrea
                                 >
                                     <div className="flex items-center gap-3">
                                         <span className="text-lg font-semibold text-white group-hover/header:text-sky-400 transition-colors">
-                                            {groupName === 'default' ? 'Default Group' : groupName}
+                                            {isDefaultGroup(groupName) ? 'Default Group' : groupName}
                                         </span>
                                         <span className="text-xs bg-slate-700 px-2.5 py-0.5 rounded-full text-slate-300 font-mono">
                                             {groupQuizzes.length} {groupQuizzes.length === 1 ? 'quiz' : 'quizzes'}
                                         </span>
                                     </div>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className={`h-5 w-5 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-sky-400' : ''}`}
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                    >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                    </svg>
+                                    <div className="flex items-center gap-2">
+                                        {!isDefaultGroup(groupName) && (
+                                            <div className="flex items-center gap-1 mr-2" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    type="button"
+                                                    id={`list-edit-group-${groupName}`}
+                                                    onClick={(e) => handleOpenEditGroup(groupName, e)}
+                                                    className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md transition-colors"
+                                                    title={`Edit group '${groupName}'`}
+                                                    aria-label={`Edit group ${groupName}`}
+                                                >
+                                                    <PencilIcon className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    id={`list-delete-group-${groupName}`}
+                                                    onClick={(e) => handleOpenDeleteGroup(groupName, e)}
+                                                    className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-md transition-colors"
+                                                    title={`Delete group '${groupName}'`}
+                                                    aria-label={`Delete group ${groupName}`}
+                                                >
+                                                    <TrashIcon className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            className={`h-5 w-5 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180 text-sky-400' : ''}`}
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
                                 </button>
                                 {isExpanded && (
                                     <div className="p-4 space-y-4 bg-slate-900/30 border-t border-slate-700/50">
@@ -145,6 +218,87 @@ export const QuizList: React.FC<QuizListProps> = ({ quizzes, onStartQuiz, onCrea
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Edit Group Modal */}
+            {editingGroupName && (
+                <div className="fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+                    <div className="bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md border border-slate-700">
+                        <h3 className="text-xl font-bold text-white mb-4">Edit Group</h3>
+                        <div>
+                            <div className="mb-4">
+                                <label htmlFor="edit-group-input" className="block text-sm font-medium text-slate-300 mb-2">
+                                    Group Name
+                                </label>
+                                <input
+                                    type="text"
+                                    id="edit-group-input"
+                                    value={editNewName}
+                                    onChange={(e) => setEditNewName(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleSaveEditGroup();
+                                        }
+                                    }}
+                                    className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                                    autoFocus
+                                    required
+                                />
+                            </div>
+
+                            {editError && <p className="text-red-400 text-sm mb-4">{editError}</p>}
+
+                            <div className="flex justify-end gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingGroupName(null)}
+                                    className="px-6 py-2 bg-transparent border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 hover:text-white transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveEditGroup}
+                                    className="px-6 py-2 bg-sky-600 text-white font-semibold rounded-lg hover:bg-sky-500 transition-colors shadow-lg shadow-sky-600/30"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Group Confirmation Modal */}
+            {deletingGroupName && (
+                <div className="fixed inset-0 bg-slate-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+                    <div className="bg-slate-800 rounded-2xl shadow-2xl p-8 w-full max-w-md border border-slate-700">
+                        <h3 className="text-xl font-bold text-white mb-4">Delete Group</h3>
+                        <p className="text-slate-300 text-sm mb-6">
+                            Are you sure you want to delete the group <span className="font-semibold text-white">'{deletingGroupName}'</span>? Quizzes in this group will be moved to 'default'.
+                        </p>
+
+                        {deleteError && <p className="text-red-400 text-sm mb-4">{deleteError}</p>}
+
+                        <div className="flex justify-end gap-4">
+                            <button
+                                type="button"
+                                onClick={() => setDeletingGroupName(null)}
+                                className="px-6 py-2 bg-transparent border border-slate-600 text-slate-300 rounded-lg hover:bg-slate-700 hover:text-white transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmDeleteGroup}
+                                className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-500 transition-colors shadow-lg shadow-red-600/30"
+                            >
+                                Delete Group
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -186,7 +186,7 @@ const App: React.FC = () => {
                  </div>
             </div>
         </div>
-        <QuizList quizzes={quizzes} onStartQuiz={handleStartQuiz} onCreateQuiz={() => setView('create')} onOpenAdvancedSettings={handleOpenAdvancedSettings}/>
+        <QuizList quizzes={quizzes} onStartQuiz={handleStartQuiz} onCreateQuiz={() => setView('create')} onOpenAdvancedSettings={handleOpenAdvancedSettings} onRefreshData={refreshData}/>
       </div>
     );
 

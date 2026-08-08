@@ -19,6 +19,11 @@ export function expect<T>(actual: T) {
             throw new Error(`Expected value to be defined, but got ${actual}`);
         }
     },
+    toBeUndefined() {
+        if(actual !== undefined) {
+            throw new Error(`Expected value to be undefined, but got ${actual}`);
+        }
+    },
     toHaveLength(expected: number) {
         const length = (actual as any)?.length;
         if (length !== expected) {

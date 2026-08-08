@@ -23,7 +23,9 @@ export const speakText = (text: string, settings: VoiceSettings) => {
   window.speechSynthesis.cancel();
 
   // 2. Prepare utterance
-  const utterance = new SpeechSynthesisUtterance(text);
+  const Utterance = window.SpeechSynthesisUtterance;
+  if (!Utterance) return;
+  const utterance = new Utterance(text);
   utterance.lang = settings.language;
   utterance.rate = settings.rate;
   utterance.pitch = settings.pitch;

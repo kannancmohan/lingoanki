@@ -17,6 +17,78 @@ export const getGroups = (): string[] => {
   }
 };
 
+export const isDefaultGroup = (groupName: string): boolean => {
+  return groupName.trim().toLowerCase() === 'default';
+};
+
+export const editGroup = (oldName: string, newName: string): { success: boolean; error?: string } => {
+  if (isDefaultGroup(oldName)) {
+    return { success: false, error: "The 'default' group cannot be edited." };
+  }
+
+  const trimmedNewName = newName.trim();
+  if (!trimmedNewName) {
+    return { success: false, error: "Group name cannot be empty." };
+  }
+
+  if (trimmedNewName.toLowerCase() === 'default' || trimmedNewName.toLowerCase() === '__create_new__') {
+    return { success: false, error: "Invalid group name." };
+  }
+
+  const currentGroups = getGroups();
+  const oldNameNormalized = oldName.trim().toLowerCase();
+  const newNameNormalized = trimmedNewName.toLowerCase();
+
+  const existsOther = currentGroups.some(g => g.toLowerCase() === newNameNormalized && g.toLowerCase() !== oldNameNormalized);
+  if (existsOther) {
+    return { success: false, error: "A group with this name already exists." };
+  }
+
+  const updatedGroups = currentGroups.map(g => {
+    if (g.trim().toLowerCase() === oldNameNormalized) {
+      return trimmedNewName;
+    }
+    return g;
+  });
+  localStorage.setItem(GROUPS_KEY, JSON.stringify(updatedGroups));
+
+  const quizzes = getQuizzes();
+  const updatedQuizzes = quizzes.map(quiz => {
+    const currentQuizGroup = (quiz.group || 'default').trim();
+    if (currentQuizGroup.toLowerCase() === oldNameNormalized) {
+      return { ...quiz, group: trimmedNewName };
+    }
+    return quiz;
+  });
+  localStorage.setItem(QUIZZES_KEY, JSON.stringify(updatedQuizzes));
+
+  return { success: true };
+};
+
+export const deleteGroup = (groupName: string): { success: boolean; error?: string } => {
+  if (isDefaultGroup(groupName)) {
+    return { success: false, error: "The 'default' group cannot be deleted." };
+  }
+
+  const targetGroupNormalized = groupName.trim().toLowerCase();
+
+  const currentGroups = getGroups();
+  const updatedGroups = currentGroups.filter(g => g.trim().toLowerCase() !== targetGroupNormalized);
+  localStorage.setItem(GROUPS_KEY, JSON.stringify(updatedGroups));
+
+  const quizzes = getQuizzes();
+  const updatedQuizzes = quizzes.map(quiz => {
+    const currentQuizGroup = (quiz.group || 'default').trim();
+    if (currentQuizGroup.toLowerCase() === targetGroupNormalized) {
+      return { ...quiz, group: 'default' };
+    }
+    return quiz;
+  });
+  localStorage.setItem(QUIZZES_KEY, JSON.stringify(updatedQuizzes));
+
+  return { success: true };
+};
+
 export const addGroup = (groupName: string): void => {
   const trimmed = groupName.trim();
   if (!trimmed) return;
@@ -144,8 +216,10 @@ export const updateQuiz = (updatedQuiz: Quiz): void => {
   const index = quizzes.findIndex(q => q.id === updatedQuiz.id);
   if (index !== -1) {
     quizzes[index] = updatedQuiz;
-    localStorage.setItem(QUIZZES_KEY, JSON.stringify(quizzes));
+  } else {
+    quizzes.push(updatedQuiz);
   }
+  localStorage.setItem(QUIZZES_KEY, JSON.stringify(quizzes));
 };
 
 export const deleteQuiz = (quizId: string): void => {

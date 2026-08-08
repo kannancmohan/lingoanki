@@ -4,8 +4,9 @@ import { pawrsServiceTests } from './unit/sessionService.test';
 import { quizFlowTests } from './integration/quizFlow.test';
 import { answerDiffTests } from './unit/answerDiff.test';
 import { ttsSettingsTests } from './unit/ttsSettings.test';
+import { groupManagementTests } from './unit/groupManagement.test';
 
-const allTestCases = [...quizFlowTests, ...pawrsServiceTests, ...answerDiffTests, ...ttsSettingsTests];
+const allTestCases = [...quizFlowTests, ...pawrsServiceTests, ...answerDiffTests, ...ttsSettingsTests, ...groupManagementTests];
 
 type TestResult = 'idle' | 'running' | 'passed' | 'failed';
 

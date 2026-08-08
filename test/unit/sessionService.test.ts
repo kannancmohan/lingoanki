@@ -47,6 +47,7 @@ export const pawrsServiceTests: TestCase[] = [
             // Weights: High: 0.4, Medium: 0.2, Low: 0.05, Unset: 0.35
             // Session Size: 100 -> High: 40, Medium: 20, Low: 5, Unset: 35
             const quiz = createTestQuiz({ High: 50, Medium: 50, Low: 50, Unset: 50 });
+            quiz.priorityWeights = { High: 0.4, Medium: 0.2, Low: 0.05, Unset: 0.35 };
             const session = selectSessionCards(quiz, 100);
             
             const counts = { High: 0, Medium: 0, Low: 0, Unset: 0 };
@@ -68,6 +69,7 @@ export const pawrsServiceTests: TestCase[] = [
             // Proportions: Med: 0.2/0.6=33.3%, Low: 0.05/0.6=8.3%, Unset: 0.35/0.6=58.3%
             // Session of 30 -> Med: 10, Low: 2.5(3), Unset: 17.5(17)
             const quiz = createTestQuiz({ High: 0, Medium: 20, Low: 20, Unset: 20 });
+            quiz.priorityWeights = { High: 0.4, Medium: 0.2, Low: 0.05, Unset: 0.35 };
             const session = selectSessionCards(quiz, 30);
             const counts = { High: 0, Medium: 0, Low: 0, Unset: 0 };
             session.forEach(card => counts[card.priority]++);
