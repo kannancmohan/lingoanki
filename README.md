@@ -1,8 +1,8 @@
-# LingoPriority - Vocabulary Trainer
+# LingoAnki - Vocabulary Trainer
 
 A smart flashcard application designed to help you learn vocabulary efficiently using a **Priority-Aware Weighted Random Sampling (PAWRS)** system. Import your own word lists via CSV, prioritize cards based on difficulty, and master your vocabulary.
 
-![LingoPriority Screenshot](https://placehold.co/800x450/0f172a/ffffff?text=LingoPriority+App+UI)
+![LingoAnki Screenshot](https://placehold.co/800x450/0f172a/ffffff?text=LingoAnki+App+UI)
 
 ---
 

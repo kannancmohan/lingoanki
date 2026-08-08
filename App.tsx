@@ -242,7 +242,7 @@ const App: React.FC = () => {
                     <div className="flex justify-between items-center">
                         <div className="flex items-center gap-4">
                             <BrainIcon className="w-8 h-8 text-sky-400"/>
-                            <h1 className="text-xl font-bold text-white">LingoPriority</h1>
+                            <h1 className="text-xl font-bold text-white">LingoAnki</h1>
                         </div>
                         <button 
                             onClick={() => setView('help')} 

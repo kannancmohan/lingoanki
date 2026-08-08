@@ -1,4 +1,4 @@
-# Product Requirements Document: LingoPriority
+# Product Requirements Document: LingoAnki
 
 **Version:** 1.0
 **Status:** Live
@@ -10,7 +10,7 @@
 
 ### 1.1. Product Vision
 
-LingoPriority is a client-side, web-based flashcard application designed for efficient vocabulary acquisition. It empowers self-directed learners to create, manage, and study their own digital card decks using a **Priority-Aware Weighted Random Sampling (PAWRS)** system.
+LingoAnki is a client-side, web-based flashcard application designed for efficient vocabulary acquisition. It empowers self-directed learners to create, manage, and study their own digital card decks using a **Priority-Aware Weighted Random Sampling (PAWRS)** system.
 
 ### 1.2. Problem Statement
 

@@ -10,7 +10,7 @@ export const HelpPage: React.FC<HelpPageProps> = ({ onBack }) => {
       <button onClick={onBack} className="text-slate-400 hover:text-white transition-colors mb-6">&larr; Back to Quizzes</button>
       
       <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700">
-        <h1 className="text-3xl font-bold text-white mb-6">How to Use LingoPriority</h1>
+        <h1 className="text-3xl font-bold text-white mb-6">How to Use LingoAnki</h1>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold text-sky-400 mb-3">1. Creating a Quiz</h2>
