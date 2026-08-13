@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Quiz, Card, Priority, SessionStats, VoiceSettings } from '../types';
-import { selectSessionCards, updateCard, formatTime } from '../services/sessionService';
+import { selectSessionCards, updateCard, formatTime, shuffleArray } from '../services/sessionService';
 import { updateQuiz as saveQuiz, calculateQuizMastery } from '../services/quizService';
 import { QuizSummary } from './QuizSummary';
 import { isAnswerCorrect, AnswerDiffViewer } from './AnswerDiffViewer';
@@ -157,7 +157,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ quiz, sessionSize, onS
         setSessionQueue(remainingSessionQueue);
         setReviewQueue(updatedReviewQueue);
     } else if (updatedReviewQueue.length > 0) {
-        const shuffledReview = [...updatedReviewQueue].sort(() => 0.5 - Math.random());
+        const shuffledReview = shuffleArray(updatedReviewQueue);
         setCurrentCard(shuffledReview[0]);
         setSessionQueue(shuffledReview);
         setReviewQueue([]);

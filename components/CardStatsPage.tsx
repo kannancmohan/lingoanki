@@ -11,11 +11,36 @@ const STORAGE_KEY_PREFIX = 'lingoAnki_colWidths_';
 const StatHeader: React.FC<{
     children: React.ReactNode;
     onMouseDown: (e: React.MouseEvent) => void;
-}> = ({ children, onMouseDown }) => (
-    <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider relative group select-none">
-        {children}
+    isSortable?: boolean;
+    isSorted?: boolean;
+    sortDirection?: 'asc' | 'desc';
+    onSort?: () => void;
+}> = ({ children, onMouseDown, isSortable, isSorted, sortDirection, onSort }) => (
+    <th 
+        onClick={isSortable ? onSort : undefined}
+        className={`px-3 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider relative group select-none ${isSortable ? 'cursor-pointer hover:text-white transition-colors' : ''}`}
+    >
+        <div className="flex items-center space-x-1">
+            <span>{children}</span>
+            {isSortable && (
+                <span className="inline-flex text-xs leading-none">
+                    {isSorted ? (
+                        sortDirection === 'asc' ? (
+                            <span className="text-sky-400 font-bold">▲</span>
+                        ) : (
+                            <span className="text-sky-400 font-bold">▼</span>
+                        )
+                    ) : (
+                        <span className="text-slate-600 group-hover:text-slate-400 opacity-60">↕</span>
+                    )}
+                </span>
+            )}
+        </div>
         <div
-            onMouseDown={onMouseDown}
+            onMouseDown={(e) => {
+                e.stopPropagation();
+                onMouseDown(e);
+            }}
             className="absolute top-0 right-0 h-full w-2 cursor-col-resize"
             style={{ zIndex: 10 }}
         />
@@ -24,18 +49,18 @@ const StatHeader: React.FC<{
 
 
 const StatCell: React.FC<{ children: React.ReactNode, className?: string }> = ({ children, className = '' }) => (
-    <td className={`px-4 py-4 whitespace-nowrap text-sm overflow-hidden text-ellipsis ${className}`}>{children}</td>
+    <td className={`px-3 py-4 whitespace-nowrap text-sm overflow-hidden text-ellipsis ${className}`}>{children}</td>
 );
 
 const defaultWidths = {
-    index: 5,
-    front: 25,
-    back: 25,
+    index: 8,
+    front: 23,
+    back: 23,
     priority: 12,
     seen: 8,
     correct: 8,
     incorrect: 8,
-    correctness: 9,
+    correctness: 10,
 };
 
 type ColumnKeys = keyof typeof defaultWidths;
@@ -68,7 +93,11 @@ export const CardStatsPage: React.FC<CardStatsPageProps> = ({ quiz, onBack }) =>
             const storedWidths = localStorage.getItem(`${STORAGE_KEY_PREFIX}${quiz.id}`);
             if (storedWidths) {
                 const parsed = JSON.parse(storedWidths);
-                return { ...defaultWidths, ...parsed };
+                const merged = { ...defaultWidths, ...parsed };
+                if (merged.index < 8) {
+                    merged.index = 8;
+                }
+                return merged;
             }
         } catch (error) {
             console.error("Failed to parse column widths from localStorage", error);
@@ -77,6 +106,8 @@ export const CardStatsPage: React.FC<CardStatsPageProps> = ({ quiz, onBack }) =>
     }, [quiz.id]);
 
     const [columnWidths, setColumnWidths] = useState<Record<ColumnKeys, number>>(getInitialWidths());
+    const [sortField, setSortField] = useState<ColumnKeys>('priority');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
     
     const tableRef = useRef<HTMLTableElement>(null);
     const resizingColumn = useRef<ColumnKeys | null>(null);
@@ -133,31 +164,68 @@ export const CardStatsPage: React.FC<CardStatsPageProps> = ({ quiz, onBack }) =>
         }
     };
 
-    const sortedCards = [...quiz.cards].sort((a, b) => {
-        const priorityComparison = priorityOrder[a.priority] - priorityOrder[b.priority];
-        if (priorityComparison !== 0) {
-            return priorityComparison;
-        }
-        
-        const correctnessA = a.timesSeen > 0 ? (a.timesCorrect / a.timesSeen) : -1;
-        const correctnessB = b.timesSeen > 0 ? (b.timesCorrect / b.timesSeen) : -1;
-        
-        if (correctnessA !== correctnessB) {
-            return correctnessA - correctnessB; // Sort by lowest correctness first
-        }
-        
-        return b.timesSeen - a.timesSeen; // Then by most seen
-    });
+    const cardsWithOriginalIndex = React.useMemo(() => {
+        return quiz.cards.map((card, idx) => ({
+            ...card,
+            originalIndex: idx + 1,
+        }));
+    }, [quiz.cards]);
 
-    const columns: { key: ColumnKeys; label: string }[] = [
-        { key: 'index', label: '#' },
-        { key: 'front', label: 'Front' },
-        { key: 'back', label: 'Back' },
-        { key: 'priority', label: 'Priority' },
-        { key: 'seen', label: 'Seen' },
-        { key: 'correct', label: 'Correct' },
-        { key: 'incorrect', label: 'Incorrect' },
-        { key: 'correctness', label: 'Correct %' },
+    const handleSort = (field: ColumnKeys) => {
+        if (field === 'front' || field === 'back') return;
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    const sortedCards = React.useMemo(() => {
+        return [...cardsWithOriginalIndex].sort((a, b) => {
+            let comp = 0;
+            if (sortField === 'index') {
+                comp = a.originalIndex - b.originalIndex;
+            } else if (sortField === 'priority') {
+                comp = priorityOrder[a.priority] - priorityOrder[b.priority];
+                if (comp === 0) {
+                    const correctnessA = a.timesSeen > 0 ? (a.timesCorrect / a.timesSeen) : -1;
+                    const correctnessB = b.timesSeen > 0 ? (b.timesCorrect / b.timesSeen) : -1;
+                    if (correctnessA !== correctnessB) {
+                        comp = correctnessA - correctnessB;
+                    } else {
+                        comp = b.timesSeen - a.timesSeen;
+                    }
+                }
+            } else if (sortField === 'seen') {
+                comp = a.timesSeen - b.timesSeen;
+            } else if (sortField === 'correct') {
+                comp = a.timesCorrect - b.timesCorrect;
+            } else if (sortField === 'incorrect') {
+                comp = a.timesIncorrect - b.timesIncorrect;
+            } else if (sortField === 'correctness') {
+                const correctnessA = a.timesSeen > 0 ? (a.timesCorrect / a.timesSeen) : -1;
+                const correctnessB = b.timesSeen > 0 ? (b.timesCorrect / b.timesSeen) : -1;
+                comp = correctnessA - correctnessB;
+            }
+
+            if (comp === 0) {
+                comp = a.originalIndex - b.originalIndex;
+            }
+
+            return sortDirection === 'asc' ? comp : -comp;
+        });
+    }, [cardsWithOriginalIndex, sortField, sortDirection]);
+
+    const columns: { key: ColumnKeys; label: string; sortable: boolean }[] = [
+        { key: 'index', label: '#', sortable: true },
+        { key: 'front', label: 'Front', sortable: false },
+        { key: 'back', label: 'Back', sortable: false },
+        { key: 'priority', label: 'Priority', sortable: true },
+        { key: 'seen', label: 'Seen', sortable: true },
+        { key: 'correct', label: 'Correct', sortable: true },
+        { key: 'incorrect', label: 'Incorrect', sortable: true },
+        { key: 'correctness', label: 'Correct %', sortable: true },
     ];
 
     return (
@@ -182,14 +250,21 @@ export const CardStatsPage: React.FC<CardStatsPageProps> = ({ quiz, onBack }) =>
                     <thead className="bg-slate-700/50">
                         <tr>
                            {columns.map(col => (
-                                <StatHeader key={col.key} onMouseDown={(e) => handleMouseDown(e, col.key)}>
+                                <StatHeader 
+                                    key={col.key} 
+                                    onMouseDown={(e) => handleMouseDown(e, col.key)}
+                                    isSortable={col.sortable}
+                                    isSorted={sortField === col.key}
+                                    sortDirection={sortDirection}
+                                    onSort={() => handleSort(col.key)}
+                                >
                                     {col.label}
                                 </StatHeader>
                            ))}
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-700">
-                        {sortedCards.map((card, index) => {
+                        {sortedCards.map((card) => {
                             const correctness = card.timesSeen > 0 ? Math.round((card.timesCorrect / card.timesSeen) * 100) : 0;
                             let correctnessColor = 'text-slate-300';
                             if(card.timesSeen > 0) {
@@ -200,7 +275,7 @@ export const CardStatsPage: React.FC<CardStatsPageProps> = ({ quiz, onBack }) =>
 
                             return (
                                 <tr key={card.id} className="hover:bg-slate-700/30">
-                                    <StatCell className="text-slate-500">{index + 1}</StatCell>
+                                    <StatCell className="text-slate-500">{card.originalIndex}</StatCell>
                                     <StatCell className="text-white font-medium">{card.front}</StatCell>
                                     <StatCell className="text-slate-300">{card.back}</StatCell>
                                     <StatCell><PriorityPill priority={card.priority} /></StatCell>

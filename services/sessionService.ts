@@ -2,6 +2,18 @@ import { Card, Quiz, Priority } from '../types';
 import { PRIORITY_WEIGHTS } from '../constants';
 
 /**
+ * Fisher-Yates (Knuth) shuffle algorithm to produce an unbiased random permutation of an array.
+ */
+export const shuffleArray = <T>(array: T[]): T[] => {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+};
+
+/**
  * Selects N items for a Quiz from a pool based on user-defined priority weights.
  * The algorithm adapts to edge cases (e.g., empty priority groups) while ensuring fairness and randomness.
  * @param quiz The quiz to select cards from.
@@ -9,13 +21,16 @@ import { PRIORITY_WEIGHTS } from '../constants';
  * @returns An array of cards for the session.
  */
 export const selectSessionCards = (quiz: Quiz, sessionSize: number): Card[] => {
-  const allCards = quiz.cards;
+  const allCards = quiz.cards || [];
   const totalCards = allCards.length;
-  const weights = quiz.priorityWeights || PRIORITY_WEIGHTS;
+  const weights: Record<Priority, number> = {
+    ...PRIORITY_WEIGHTS,
+    ...(quiz.priorityWeights || {}),
+  };
 
-  // 1. If total items < N, return all items shuffled.
+  // 1. If total items <= N, return all items shuffled.
   if (totalCards <= sessionSize) {
-    return [...allCards].sort(() => 0.5 - Math.random());
+    return shuffleArray(allCards);
   }
 
   // 2. Group cards by priority.
@@ -27,7 +42,11 @@ export const selectSessionCards = (quiz: Quiz, sessionSize: number): Card[] => {
   };
   allCards.forEach(card => {
     const priority = card.priority || Priority.Unset;
-    groups[priority].push(card);
+    if (groups[priority]) {
+      groups[priority].push(card);
+    } else {
+      groups[Priority.Unset].push(card);
+    }
   });
 
   const sessionDeck: Card[] = [];
@@ -41,7 +60,7 @@ export const selectSessionCards = (quiz: Quiz, sessionSize: number): Card[] => {
     if (remainingN <= 0) break;
 
     const group = groups[priority];
-    const groupWeight = weights[priority];
+    const groupWeight = weights[priority] ?? PRIORITY_WEIGHTS[priority];
     
     // 4. If a group is empty, skip and redistribute its weight.
     if (group.length === 0) {
@@ -51,11 +70,11 @@ export const selectSessionCards = (quiz: Quiz, sessionSize: number): Card[] => {
 
     // Calculate how many to take from this group based on its share of the *remaining* weight and slots.
     const targetCount = remainingWeight > 0 ? Math.round((groupWeight / remainingWeight) * remainingN) : remainingN;
-    const countToTake = Math.min(group.length, targetCount);
+    const countToTake = Math.min(group.length, Math.max(0, targetCount));
 
     // 5. Use randomized selection within each priority group.
-    group.sort(() => 0.5 - Math.random());
-    sessionDeck.push(...group.slice(0, countToTake));
+    const shuffledGroup = shuffleArray(group);
+    sessionDeck.push(...shuffledGroup.slice(0, countToTake));
 
     remainingN -= countToTake;
     remainingWeight -= groupWeight;
@@ -64,16 +83,14 @@ export const selectSessionCards = (quiz: Quiz, sessionSize: number): Card[] => {
   // 6. If there's a shortfall (due to rounding or empty groups), fill it from any remaining cards.
   if (sessionDeck.length < sessionSize) {
     const deckIds = new Set(sessionDeck.map(c => c.id));
-    const remainingCards = allCards
-      .filter(c => !deckIds.has(c.id))
-      .sort(() => 0.5 - Math.random());
+    const remainingCards = shuffleArray(allCards.filter(c => !deckIds.has(c.id)));
     
     const shortfall = sessionSize - sessionDeck.length;
     sessionDeck.push(...remainingCards.slice(0, shortfall));
   }
   
   // Final shuffle to mix cards from different priority groups.
-  return sessionDeck.sort(() => 0.5 - Math.random()).slice(0, sessionSize);
+  return shuffleArray(sessionDeck).slice(0, sessionSize);
 };
 
 

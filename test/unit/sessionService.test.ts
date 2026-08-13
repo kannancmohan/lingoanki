@@ -116,6 +116,59 @@ export const pawrsServiceTests: TestCase[] = [
         }
     },
     {
+        name: 'PAWRS Test: Redistributes weight when Unset group is empty (all cards answered at least once)',
+        testFn: () => {
+            // User has answered all cards so Unset = 0.
+            // High: 50 cards, Medium: 50 cards, Low: 50 cards, Unset: 0 cards.
+            const quiz = createTestQuiz({ High: 50, Medium: 50, Low: 50, Unset: 0 });
+            const session = selectSessionCards(quiz, 30);
+
+            const counts = { High: 0, Medium: 0, Low: 0, Unset: 0 };
+            session.forEach(card => counts[card.priority]++);
+
+            expect(session.length).toBe(30);
+            expect(counts.Unset).toBe(0);
+            
+            // Expected breakdown roughly: High ~ 21 (71.4%), Medium ~ 8 (25.7%), Low ~ 1 (2.9%)
+            const tolerance = 3;
+            if (Math.abs(counts.High - 21) > tolerance) {
+                throw new Error(`Expected ~21 High cards, got ${counts.High}`);
+            }
+            if (Math.abs(counts.Medium - 8) > tolerance) {
+                throw new Error(`Expected ~8 Medium cards, got ${counts.Medium}`);
+            }
+            if (counts.Low < 1 || counts.Low > 4) {
+                throw new Error(`Expected 1-4 Low cards, got ${counts.Low}`);
+            }
+        }
+    },
+    {
+        name: 'Randomness Test: Selects cards in random non-sequential order when all cards are Unset',
+        testFn: () => {
+            // Create 100 Unset cards
+            const quiz = createTestQuiz({ High: 0, Medium: 0, Low: 0, Unset: 100 });
+            const session = selectSessionCards(quiz, 30);
+            
+            expect(session.length).toBe(30);
+
+            // Check that the returned IDs are NOT identical to card_1, card_2, ..., card_30
+            const selectedIds = session.map(c => c.id);
+            const sequentialIds = Array.from({ length: 30 }, (_, i) => `card_${i + 1}`);
+
+            let matchesInOrder = 0;
+            for (let i = 0; i < 30; i++) {
+                if (selectedIds[i] === sequentialIds[i]) {
+                    matchesInOrder++;
+                }
+            }
+
+            // With true random shuffling out of 100 cards, the chance of getting exact sequential card_1..card_30 is virtually 0
+            if (matchesInOrder > 25) {
+                throw new Error(`Session cards were picked sequentially! Found ${matchesInOrder}/30 matching original sequence.`);
+            }
+        }
+    },
+    {
         name: 'Timer Test: Formats seconds into digital timer format (mm:ss / hh:mm:ss)',
         testFn: () => {
             expect(formatTime(0)).toBe('00:00');
