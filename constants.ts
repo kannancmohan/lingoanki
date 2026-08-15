@@ -7,9 +7,9 @@ export const DEFAULT_REPEAT_INCORRECT_CARDS = true;
 
 export const PRIORITY_WEIGHTS = {
   [ 'High' as const]: 0.5,
-  [ 'Medium' as const]: 0.18,
-  [ 'Low' as const]: 0.02,
-  [ 'Unset' as const]: 0.3,
+  [ 'Medium' as const]: 0.15,
+  [ 'Low' as const]: 0.01,
+  [ 'Unset' as const]: 0.34,
 };
 
 export const DEFAULT_VOICE_SETTINGS: VoiceSettings = {
