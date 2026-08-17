@@ -7,7 +7,7 @@ import { CreateQuizModal } from './components/CreateQuizModal';
 import { QuizSession } from './components/QuizSession';
 import { HelpPage } from './components/HelpPage';
 import { AdvancedQuizModal } from './components/AdvancedQuizModal';
-import { BrainIcon, QuestionMarkCircleIcon } from './components/icons';
+import { BrainIcon, QuestionMarkCircleIcon, ChevronDownIcon } from './components/icons';
 import { EditQuizPage } from './components/EditQuizPage';
 import { ImportWarningModal } from './components/ImportWarningModal';
 import { CardStatsPage } from './components/CardStatsPage';
@@ -32,6 +32,22 @@ const App: React.FC = () => {
             return true;
         }
     });
+    const [isOptionsOpen, setIsOptionsOpen] = useState<boolean>(() => {
+        try {
+            const saved = localStorage.getItem('quiz_options_open');
+            return saved !== null ? JSON.parse(saved) : false;
+        } catch {
+            return false;
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem('quiz_options_open', JSON.stringify(isOptionsOpen));
+        } catch {
+            // ignore
+        }
+    }, [isOptionsOpen]);
 
     useEffect(() => {
         try {
@@ -151,40 +167,61 @@ const App: React.FC = () => {
 
     const renderListView = () => (
       <div className="w-full max-w-2xl mx-auto px-4 py-8">
-        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 mb-8">
-            <h2 className="text-2xl font-bold text-white mb-5">Quiz Session Options</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                 <div className="flex items-center gap-2">
-                    <label htmlFor="session-items" className="text-sm font-medium text-slate-300">Items per session:</label>
-                    <input
-                        id="session-items"
-                        type="number"
-                        min={MIN_ITEMS_PER_SESSION}
-                        value={sessionSize}
-                        onChange={(e) => setSessionSize(Number(e.target.value))}
-                        onBlur={(e) => {
-                            if (!e.target.value || Number(e.target.value) < MIN_ITEMS_PER_SESSION) {
-                                setSessionSize(FALLBACK_ITEMS_PER_SESSION);
-                            }
-                        }}
-                        className="bg-slate-700 text-white border border-slate-600 rounded-md px-2 py-1 text-sm w-20 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    />
+        <div className="bg-slate-800 rounded-2xl border border-slate-700 mb-8 overflow-hidden transition-all">
+            <button
+                type="button"
+                onClick={() => setIsOptionsOpen(!isOptionsOpen)}
+                className="w-full p-6 flex justify-between items-center text-left hover:bg-slate-750/50 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500/50 rounded-2xl"
+                aria-expanded={isOptionsOpen}
+                aria-controls="quiz-session-options-content"
+            >
+                <div className="flex flex-wrap items-center gap-3">
+                    <h2 className="text-xl sm:text-2xl font-bold text-white">Quiz Session Options</h2>
+                    <span className="text-xs bg-slate-700 text-slate-300 px-2.5 py-1 rounded-full font-medium">
+                        {sessionSize} items • {reviewMode === 'immediate' ? 'Repeat incorrect' : 'Strict mode'} • {showTimer ? 'Timer on' : 'Timer off'}
+                    </span>
                 </div>
-                 <div className="flex items-center gap-2">
-                    <ToggleSwitch 
-                        label="Repeat incorrect cards"
-                        enabled={reviewMode === 'immediate'}
-                        onChange={(enabled) => setReviewMode(enabled ? 'immediate' : 'strict')}
-                    />
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <ToggleSwitch 
-                        label="Show session timer"
-                        enabled={showTimer}
-                        onChange={(enabled) => setShowTimer(enabled)}
-                    />
-                 </div>
-            </div>
+                <ChevronDownIcon 
+                    className={`w-6 h-6 text-slate-400 shrink-0 transition-transform duration-200 ${isOptionsOpen ? 'rotate-180' : ''}`} 
+                />
+            </button>
+            {isOptionsOpen && (
+                <div 
+                    id="quiz-session-options-content"
+                    className="px-6 pb-6 pt-2 border-t border-slate-700/50 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4"
+                >
+                     <div className="flex items-center gap-2">
+                        <label htmlFor="session-items" className="text-sm font-medium text-slate-300">Items per session:</label>
+                        <input
+                            id="session-items"
+                            type="number"
+                            min={MIN_ITEMS_PER_SESSION}
+                            value={sessionSize}
+                            onChange={(e) => setSessionSize(Number(e.target.value))}
+                            onBlur={(e) => {
+                                if (!e.target.value || Number(e.target.value) < MIN_ITEMS_PER_SESSION) {
+                                    setSessionSize(FALLBACK_ITEMS_PER_SESSION);
+                                }
+                            }}
+                            className="bg-slate-700 text-white border border-slate-600 rounded-md px-2 py-1 text-sm w-20 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                        />
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <ToggleSwitch 
+                            label="Repeat incorrect cards"
+                            enabled={reviewMode === 'immediate'}
+                            onChange={(enabled) => setReviewMode(enabled ? 'immediate' : 'strict')}
+                        />
+                     </div>
+                     <div className="flex items-center gap-2">
+                        <ToggleSwitch 
+                            label="Show session timer"
+                            enabled={showTimer}
+                            onChange={(enabled) => setShowTimer(enabled)}
+                        />
+                     </div>
+                </div>
+            )}
         </div>
         <QuizList quizzes={quizzes} onStartQuiz={handleStartQuiz} onCreateQuiz={() => setView('create')} onOpenAdvancedSettings={handleOpenAdvancedSettings} onRefreshData={refreshData}/>
       </div>
